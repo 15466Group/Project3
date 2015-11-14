@@ -22,8 +22,8 @@ public class PathfindingScheduler {
 			ReachGoal reachGoal = currChar.GetComponent<MasterBehaviour> ().reachGoal;
 			Vector3 start = currChar.transform.position;
 			Vector3 end = reachGoal.goalPos;
-			Debug.Log ("End: " + reachGoal.goalPos);
-			Debug.Log ("Start: " + start);
+//			Debug.Log ("End: " + reachGoal.goalPos);
+//			Debug.Log ("Start: " + start);
 
 			//graph sets a threshold for how many nodes to search.
 			//if the threshold is hit before the goalNode is found, graphsearch returns an estimated path

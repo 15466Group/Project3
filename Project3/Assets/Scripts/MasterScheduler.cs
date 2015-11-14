@@ -6,6 +6,7 @@ public class MasterScheduler : MonoBehaviour {
 
 	public GameObject player;
 	public GameObject characters;
+	public GameObject sniper;
 
 	public GameObject plane;
 	public float nodeSize;
@@ -34,7 +35,7 @@ public class MasterScheduler : MonoBehaviour {
 		
 		for (int i = 0; i < numChars; i++) {
 			MasterBehaviour mb = characters.transform.GetChild(i).GetComponent<MasterBehaviour>();
-			mb.Starta(plane, nodeSize);
+			mb.Starta(plane, nodeSize, sniper.transform.position);
 			behaviourScripts[i] = mb;
 		}
 
@@ -98,6 +99,8 @@ public class MasterScheduler : MonoBehaviour {
 				MasterBehaviour mb = behaviourScripts [i];
 				if (!mb.isDead) {
 					mb.updateDeadSet (seenDeadSet);
+					//fixme get rid of this
+					mb.updateSniperPos();
 				}
 			}
 		}
@@ -115,20 +118,6 @@ public class MasterScheduler : MonoBehaviour {
 	}
 
 	void updateStatus(GameObject currChar, MasterBehaviour mb){
-//		if (timer < 5.0f) {
-//			mb.seesPlayer = false;
-//			mb.seesDeadPeople = false;
-//			mb.hearsSomething = false;
-//			mb.health = 100.0f;
-//			Debug.Log(timer);
-//		} else if (timer < 25.0f) {
-//			Debug.Log ("pathfinding time... " + player.transform.position);
-//			mb.seesPlayer = true;
-//			mb.poi = player.transform.position;
-//			Debug.Log ("pathfinding time start... " + currChar.transform.position);
-//		} else {
-//			timer = 0.0f;
-//		}
 		if (mb.isDead) {
 			if (mb.addToDeadSet){
 				//just died, need to make a noise when dying

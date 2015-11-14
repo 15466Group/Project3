@@ -43,7 +43,7 @@ public class Graph : Object {
 		List<Node> failPath = new List<Node> ();
 		failPath.Add (s.endNode);
 
-		Debug.Log ("EndNode: " + s.endNode.loc);
+//		Debug.Log ("EndNode: " + s.endNode.loc);
 
 		while (s.open.Count > 0) {
 			Node current = findSmallestVal(s.open);

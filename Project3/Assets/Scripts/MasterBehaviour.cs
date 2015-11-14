@@ -16,7 +16,7 @@ public class MasterBehaviour : MonoBehaviour {
 	public bool addToDeadSet { get; set; }
 	public bool isShooting { get; set; }
 	public bool disturbed { get; set; }
-	public bool seesSniper { get; set; }
+	public bool sniperPosKnown { get; set; }
 	public Vector3 sniperPos { get; set; }
 
 	public ReachGoal reachGoal { get; set; }
@@ -43,7 +43,7 @@ public class MasterBehaviour : MonoBehaviour {
 
 	private AudioSource gunShot;
 	// Use this for initialization
-	public void Starta (GameObject plane, float nodeSize) {
+	public void Starta (GameObject plane, float nodeSize, Vector3 sP) {
 
 		fixedDeadCollider = false;
 
@@ -55,8 +55,8 @@ public class MasterBehaviour : MonoBehaviour {
 		disturbed = false;
 		isDead = false;
 		addToDeadSet = false;
-		seesSniper = false;
-		sniperPos = Vector3.zero;
+		sniperPosKnown = false;
+		sniperPos = sP;
 
 		reachGoal = GetComponent<ReachGoal> ();
 		wander = GetComponent<Wander> ();
@@ -67,6 +67,7 @@ public class MasterBehaviour : MonoBehaviour {
 		reachGoal.plane = plane;
 		reachGoal.nodeSize = nodeSize;
 		reachGoal.goalPos = poi;
+		reachGoal.sniperPos = sniperPos;
 		reachGoal.Starta ();
 		wander.Starta ();
 		patrol.Starta ();
@@ -98,7 +99,8 @@ public class MasterBehaviour : MonoBehaviour {
 		if (isShooting && !gunShot.isPlaying && !gc.isDead) {
 			shoot ();
 		}
-		if (!(seesPlayer || seesDeadPeople || hearsSomething)) {
+//		if (!(seesPlayer || seesDeadPeople || hearsSomething)) {
+		if (!(seesPlayer || hearsSomething)) {
 //			Debug.Log ("Wander");
 //			wander.Updatea();
 //			velocity = wander.velocity;
@@ -110,7 +112,7 @@ public class MasterBehaviour : MonoBehaviour {
 				doDefaultBehaviour();
 			}
 		} else {
-			Debug.Log("Update GoalPos to: " + reachGoal.goalPos);
+//			Debug.Log("Update GoalPos to: " + reachGoal.goalPos);
 			reachGoal.goalPos = poi;
 			velocity = reachGoal.velocity;
 		}
@@ -134,7 +136,8 @@ public class MasterBehaviour : MonoBehaviour {
 	}
 
 	public bool isReachingGoal(){
-		return (seesPlayer || seesDeadPeople || hearsSomething) && !isDead;
+//		return (seesPlayer || seesDeadPeople || hearsSomething) && !isDead;
+		return (seesPlayer || hearsSomething) && !isDead;
 	}
 
 	public void getHit(int damage) {
@@ -178,5 +181,12 @@ public class MasterBehaviour : MonoBehaviour {
 		//do the animation or draw the alert thing
 		seesDeadPeople = true;
 		deadPeopleSeen = seenDeadSet;
+	}
+
+	public void updateSniperPos(){
+		sniperPosKnown = true;
+		reachGoal.updateSniperPos ();
+		Debug.Log ("knows sniper pos");
+//		Debug.Break ();
 	}
 }

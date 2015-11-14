@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class ReachGoal: NPCBehaviour {
 
 	public Vector3 goalPos { get; set; } //the point of interest, poi, where they are trying to get to
+	public Vector3 sniperPos { get; set; }
 	private bool hitNextNode;
 
 	public List<Node> path { get; set; }
@@ -40,7 +41,7 @@ public class ReachGoal: NPCBehaviour {
 		path = new List<Node> ();
 		inArrivalRadius = false;
 		arrivalRadius = 0.0f;
-		Grid G = new Grid(plane, goalPos, nodeSize);
+		Grid G = new Grid(plane, goalPos, nodeSize, sniperPos);
 		G.initStart ();
 		state = new State (new List<Node> (), new List<Node> (), new Dictionary<Node, Node> (),
 		                  null, null, G, null, false, false);
@@ -98,5 +99,9 @@ public class ReachGoal: NPCBehaviour {
 		} else {
 			inArrivalRadius = Vector3.Distance (goalPos, transform.position) <= arrivalRadius;
 		}
+	}
+
+	public void updateSniperPos(){
+		state.sGrid.sniperPosKnown = true;
 	}
 }

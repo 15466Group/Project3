@@ -2,10 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 
+//lighter means avoid
+
 public class Grid{
 
 	public float nodeSize;
-	public Vector3 goalPos { get; set; }
+	public Vector3 goalPos { get; set; } //could be a dead body, last seen player pos, or player pos for example
 	private GameObject plane;
 
 	private int obstacleLayer;
@@ -20,14 +22,24 @@ public class Grid{
 	private float worldHeight;
 	private Vector3 worldNW; //world north west, top left corner of map/plane
 
-	public Grid (GameObject p, Vector3 goalp, float nS) {
+	private Vector3 sniperPos;
+	public bool sniperPosKnown { get; set; }
+	private float[,] spaceCostScalars;
+
+	private float initSpaceCost;
+	private float overlapRadius;
+
+	public Grid (GameObject p, Vector3 goalp, float nS, Vector3 sP) {
 		plane = p;
 		goalPos = goalp;
 		nodeSize = nS;
+		sniperPos = sP;
 	}
 
 	// Use this for initialization
 	public void initStart () {
+		initSpaceCost = 3.0f;
+		overlapRadius = 10.0f;
 		worldWidth = plane.transform.lossyScale.x * 10.0f; //plane
 		worldHeight = plane.transform.lossyScale.z * 10.0f; //plane
 
@@ -42,19 +54,42 @@ public class Grid{
 		deadLayer = 1 << LayerMask.NameToLayer ("Dead");
 		dynamicLayer = 1 << LayerMask.NameToLayer ("Dynamic");
 
+		//once the character knows where the sniper is, then he'll know 'if i can't see the sniper, then the sniper can't see me'
+		//so he'll know that some spots will hide him from the sniper (ie behind tall buildings) and therefore will want
+		//those those h values to be less. Thus, initially these scalars are 1 because they don't know where the sniper is,
+		//but they'll be set to x when they do know where the sniper is.
+		spaceCostScalars = new float[gridWidth, gridHeight];
+		sniperPosKnown = false;
+		setSpaceCostScalars ();
 		initializeGrid ();
 		updateGrid (goalPos);
-//				for (int i = 0; i < gridWidth; i++) {
-//					for (int j = 0; j < gridHeight; j ++) {
-//						float sc = grid[i,j].spaceCost;
-//						Debug.Log (sc);
-//						Color scaledGrey = Color.white * (sc/3.0f);
-//						Debug.DrawLine (grid[i,j].loc + Vector3.right*(nodeSize/2.0f), grid[i,j].loc - Vector3.right*(nodeSize/2.0f), scaledGrey, 200);
-//						//Debug.DrawLine (grid[i,j].loc + Vector3.forward*(nodeSize/2.0f), grid[i,j].loc - Vector3.forward*(nodeSize/2.0f), scaledGrey, 2, false);
-//						
-//					}
-//				}
+//		drawShadeLines ();
+	}
 
+	public void setSpaceCostScalars(){
+		RaycastHit hit;
+		for (int i = 0; i < gridWidth; i++) {
+			for (int j = 0; j < gridHeight; j++) {
+				float xp = i * nodeSize + (nodeSize/2.0f) + worldNW.x;
+				float zp = -(j * nodeSize + (nodeSize/2.0f)) + worldNW.z;
+				//hidden from the sniper
+				float scalar = 1.0f;
+				float charHeight = 5.0f;
+				Vector3 nodeCenter = new Vector3(xp, charHeight, zp);
+//				Debug.DrawLine(nodeCenter, sniperPos, Color.magenta, 100f);
+				//can see the sniper from this node, so vice versa
+				if (Physics.Raycast(nodeCenter, sniperPos - nodeCenter, out hit, Mathf.Infinity, obstacleLayer)){
+					if (hit.collider.gameObject.CompareTag("MainCamera")){
+						scalar = 3.0f;
+//						Debug.Log ("sees snipe: " + i + ", " + j);
+					}
+//					else {
+//						Debug.Log ("sees wall: " + i + ", " + j);
+//					}
+				}
+				spaceCostScalars[i,j] = scalar;
+			}
+		}
 	}
 
 	public void initializeGrid(){
@@ -67,14 +102,13 @@ public class Grid{
 				float h = Vector3.Distance(nodeCenter, goalPos);
 				int len = hits.Length;
 				if(len == 0) { 
-					grid[i,j] = new Node(true, nodeCenter, i, j, h, 3.0f);
+					grid[i,j] = new Node(true, nodeCenter, i, j, h, initSpaceCost);
 				}
 				else {
-					grid[i,j] = new Node(false, nodeCenter, i, j, h, 3.0f);
+					grid[i,j] = new Node(false, nodeCenter, i, j, h, initSpaceCost);
 				}
 			}
 		}
-
 	}
 	
 	public void updateGrid(Vector3 g){
@@ -84,46 +118,60 @@ public class Grid{
 				float xp = i * nodeSize + (nodeSize/2.0f) + worldNW.x;
 				float zp = -(j * nodeSize + (nodeSize/2.0f)) + worldNW.z;
 				Vector3 nodeCenter = new Vector3(xp, 0.0f, zp);
-				Collider[] hits = Physics.OverlapSphere(nodeCenter, 10.0f, obstacleLayer | deadLayer | dynamicLayer);
+				Collider[] hits = Physics.OverlapSphere(nodeCenter, overlapRadius, obstacleLayer | deadLayer | dynamicLayer);
 				float h = Vector3.Distance(nodeCenter, goalPos);
 				int len = hits.Length;
-				if(len == 0) {
-					grid[i,j] = new Node(true, nodeCenter, i, j, h, 3.0f);
+//				float spaceCostScalar = Mathf.Infinity;
+				if (sniperPosKnown){
+//					spaceCostScalar = spaceCostScalars[i,j];
+					grid[i,j] = new Node(true, nodeCenter, i, j, h, spaceCostScalars[i,j]);
+//					Debug.Log ("sniperPosKnown");
 				}
 				else {
-					bool free = true;
-					float scacc = 3.0f;
-					float minDist = 10.0f;
-					foreach(Collider c in hits) {
-						float dist = Vector3.Distance (c.ClosestPointOnBounds(nodeCenter), nodeCenter);
-						if(dist < nodeSize/2.0f) {
-							free = false;
-						}
-						if (c.CompareTag("Dead")){
-							scacc = 3.0f;
-							break;
-						}
-						if (dist < minDist) {
-							//scacc = (Mathf.Exp (dist/50.0f - 1.0f) * 3.0f);
-							minDist = dist;
-							scacc = (dist / 10.0f) * (dist / 10.0f) * 3.0f;
-						}
+					if(len == 0) {
+						grid[i,j] = new Node(true, nodeCenter, i, j, h, initSpaceCost);
 					}
-					grid[i,j] = new Node(free, nodeCenter, i, j, h, scacc);
+					else {
+						bool free = true;
+						float spaceCost = initSpaceCost;
+						float minDist = overlapRadius;
+	//					float bool
+						foreach(Collider c in hits) {
+							float dist = Vector3.Distance (c.ClosestPointOnBounds(nodeCenter), nodeCenter);
+							if(dist < nodeSize/2.0f) {
+								free = false;
+							}
+							if (c.CompareTag("Dead")){
+								spaceCost = initSpaceCost;
+								break;
+							}
+							//only look at the obstacle closest to the node to weight the heuristic with spaceCost
+							if (dist < minDist) {
+								minDist = dist;
+								spaceCost = (dist / overlapRadius) * (dist / overlapRadius) * initSpaceCost;
+							}
+						}
+						grid[i,j] = new Node(free, nodeCenter, i, j, h, spaceCost);
+					}
 				}
 			}
 		}
+//		drawShadeLines ();
+	}
+
+	void drawShadeLines(){
 		for (int i = 0; i < gridWidth; i++) {
 			for (int j = 0; j < gridHeight; j ++) {
 				float sc = grid[i,j].spaceCost;
-				Debug.Log (sc);
-				Color scaledGrey = Color.white * (sc/3.0f);
+//				float den = initSpaceCost;
+//				if (sniperPosKnown)
+//					den *= spaceCostScalars[i,j];
+				Color scaledGrey = Color.white * (sc/initSpaceCost);
 				Debug.DrawLine (grid[i,j].loc + Vector3.right*(nodeSize/2.0f), grid[i,j].loc - Vector3.right*(nodeSize/2.0f), scaledGrey, 2);
 				//Debug.DrawLine (grid[i,j].loc + Vector3.forward*(nodeSize/2.0f), grid[i,j].loc - Vector3.forward*(nodeSize/2.0f), scaledGrey, 2, false);
 				
 			}
 		}
-
 	}
 
 //	void OnDrawGizmos() {
@@ -143,17 +191,17 @@ public class Grid{
 //			}
 //		}
 //	}
-
-	bool checkIfContainsTag(Collider[] hits, string tag){
-		bool foundTag = false;
-		foreach (Collider hit in hits) {
-			if (hit.CompareTag(tag)){
-				foundTag = true;
-				break;
-			}
-		}
-		return foundTag;
-	}
+//
+//	bool checkIfContainsTag(Collider[] hits, string tag){
+//		bool foundTag = false;
+//		foreach (Collider hit in hits) {
+//			if (hit.CompareTag(tag)){
+//				foundTag = true;
+//				break;
+//			}
+//		}
+//		return foundTag;
+//	}
 
 	public Vector3 getGridCoords(Vector3 location) {
 		float newx = location.x + worldWidth / 2.0f;
