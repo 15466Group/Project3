@@ -4,47 +4,13 @@ using System.Collections.Generic;
 
 public class PathfindingScheduler {
 	
-//	public GameObject goal;
 	public LinkedList<GameObject> characters { get; set; } //empty gameobject containing children of in game characters
 	public LinkedListNode<GameObject> currCharNode { get; set; }
-//	public GameObject plane;
-//	public GameObject swamps;
-//	public float nodeSize;
-
-//	private Grid G;
 	private Graph graph;
-//	private ReachGoal reachGoal;
 
 	public PathfindingScheduler(){
 		graph = new Graph (2.0f);
 	}
-
-//	private State[] states;
-
-	// Use this for initialization
-//	void Starta () {
-//		iChar = 0;
-//		numChars = characters.transform.childCount;
-//		graph = new Graph (2.0f);
-//		states = new State[numChars];
-//		for (int i = 0; i < numChars; i++) {
-//			Transform child = characters.transform.GetChild(i);
-//			reachGoal = child.GetComponent<ReachGoal> ();
-//			reachGoal.Starta();
-//			Grid G = new Grid(plane, goal, nodeSize, swamps);
-//			G.initStart();
-//			states[i] = new State(new List<Node> (), new List<Node> (), new Dictionary<Node, Node> (),
-//			                      null, null, reachGoal.swampCost, G, null, false, false);
-//		}
-//		if (swamps != null) {
-//			int swampCount = swamps.transform.childCount;
-//			for (int k = 0; k < swampCount; k++) {
-//				swamps.transform.GetChild (k).GetComponent<MeshCollider> ().enabled = false;
-//			}
-//		}
-//	}
-
-	//have to update reachGoal.G.goalPos = behaviour[i].poi
 	
 	// Update is called once per frame
 	public void Updatea () {

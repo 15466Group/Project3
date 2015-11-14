@@ -12,6 +12,7 @@ public class ReachGoal: NPCBehaviour {
 	public Vector3 nextCoords { get; set; }
 	public Vector3 transCoords { get; set; }
 	public Vector3 endCoords { get; set; }
+	public List<Vector3> deadPeopleSeen { get; set; }
 
 	public GameObject plane { get; set; }
 	public GameObject swamps { get; set; }
@@ -46,6 +47,7 @@ public class ReachGoal: NPCBehaviour {
 		state = new State (new List<Node> (), new List<Node> (), new Dictionary<Node, Node> (),
 		                  null, null, swampCost, G, null, false, false);
 		speedMax = 20.0f;
+		deadPeopleSeen = new List<Vector3> ();
 	}
 
 	public Node nextStep () {

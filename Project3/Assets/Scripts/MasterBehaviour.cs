@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class MasterBehaviour : MonoBehaviour {
 
@@ -8,10 +9,14 @@ public class MasterBehaviour : MonoBehaviour {
 	public float health { get; set; }
 	public bool seesPlayer { get; set; }
 	public bool seesDeadPeople { get; set; }
+
 	public bool hearsSomething { get; set; }
 	public bool isDead { get; set; }
+	public bool addToDeadSet { get; set; }
 	public bool isShooting { get; set; }
-	public bool disturbed { get; set;}
+	public bool disturbed { get; set; }
+	public bool seesSniper { get; set; }
+	public Vector3 sniperPos { get; set; }
 
 	public ReachGoal reachGoal { get; set; }
 	private Wander wander;
@@ -47,6 +52,10 @@ public class MasterBehaviour : MonoBehaviour {
 		seesDeadPeople = false;
 		hearsSomething = false;
 		disturbed = false;
+		isDead = false;
+		addToDeadSet = false;
+		seesSniper = false;
+		sniperPos = Vector3.zero;
 
 		reachGoal = GetComponent<ReachGoal> ();
 		wander = GetComponent<Wander> ();
@@ -79,7 +88,7 @@ public class MasterBehaviour : MonoBehaviour {
 			if (!fixedDeadCollider){
 				transform.gameObject.layer = LayerMask.NameToLayer("Obstacles"); //now an obstacle;
 				BoxCollider bc = GetComponent<BoxCollider>();
-				bc.center = new Vector3(transform.position.x, -0.5f, transform.position.z);
+				bc.center = new Vector3(0f, -0.5f, 0f);
 				fixedDeadCollider = true;
 			}
 			return;
@@ -133,9 +142,9 @@ public class MasterBehaviour : MonoBehaviour {
 		}
 		if (damage >= 3) {
 			isDead = true;
-//			Debug.Log ("isDead");
-//			Debug.Break();
+			addToDeadSet = true;
 			anim.CrossFade (dying);
+			//need to make a noise when dying
 		}
 	}
 
@@ -162,5 +171,11 @@ public class MasterBehaviour : MonoBehaviour {
 		} else {
 			anim.CrossFade (idle);
 		}
+	}
+
+	public void updateDeadSet(List<Vector3> seenDeadSet){
+		//do the animation or draw the alert thing
+		seesDeadPeople = true;
+		reachGoal.deadPeopleSeen = seenDeadSet;
 	}
 }

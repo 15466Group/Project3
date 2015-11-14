@@ -18,10 +18,13 @@ public class MasterScheduler : MonoBehaviour {
 	private PathfindingScheduler pathfinder;
 	private LinkedList<GameObject> pathFindingChars;
 	private LinkedListNode<GameObject> currCharForPath;
+	private List<GameObject> deadSet;
+	private List<Vector3> seenDeadSet;
 
 	private float timer;
 	private float seenTime;
 	private float shootDistance;
+	private float sightDist;
 
 	// Use this for initialization
 	void Start () {
@@ -38,6 +41,8 @@ public class MasterScheduler : MonoBehaviour {
 
 		pathfinder = new PathfindingScheduler ();
 		pathFindingChars = new LinkedList<GameObject> ();
+		deadSet = new List<GameObject>();
+		seenDeadSet = new List<Vector3> ();
 
 
 		//get rid of swamp colliders
@@ -48,6 +53,7 @@ public class MasterScheduler : MonoBehaviour {
 			}
 		}
 		shootDistance = 10f;
+		sightDist = 100.0f;
 	
 	}
 	
@@ -83,11 +89,29 @@ public class MasterScheduler : MonoBehaviour {
 			}
 		}
 
-//		//perform the behaviors now that their staus is updated
-//		for (int j = 0; j < numChars; j++) {
-//			behaviourScripts[j].Updatea();
-//		}
+		//add dead characters to seenDeadSet if an alive character sees a dead one
+		float sightAngle = 30.0f;
+		bool updatedDeadSet = false;
+		for (int i = 0; i < numChars; i++) {
+			GameObject currChar = characters.transform.GetChild (i).gameObject;
+			MasterBehaviour mb = behaviourScripts [i];
+			if (!mb.isDead){
+				updatedDeadSet = checkToSeeDead(currChar, mb, sightAngle);
+			}
+		}
 
+		//seenDeadSet now updated so pass this along to every character because assumed they are now notified of all dead positions
+		if (updatedDeadSet) {
+			for (int i = 0; i < numChars; i++) {
+				GameObject currChar = characters.transform.GetChild (i).gameObject;
+				MasterBehaviour mb = behaviourScripts [i];
+				if (!mb.isDead) {
+					mb.updateDeadSet (seenDeadSet);
+				}
+			}
+		}
+
+		//put the pathfinding characters in the pathfinder
 		pathfinder.characters = pathFindingChars;
 		pathfinder.currCharNode = currCharForPath;
 		//do pathfinding stuff
@@ -115,26 +139,62 @@ public class MasterScheduler : MonoBehaviour {
 //			timer = 0.0f;
 //		}
 		if (mb.isDead) {
+			if (mb.addToDeadSet){
+				//just died, need to make a noise when dying
+				mb.addToDeadSet = false;
+				deadSet.Add (currChar);
+			}
 			return;
 		}
 		mb.isShooting = false;
-		RaycastHit hit;
-		float angle;
+		float playerAngle;
 		if (mb.seesPlayer)
-			angle = 360.0f;
+			playerAngle = 360.0f;
 		else
-			angle = 30.0f;
-		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward + currChar.transform.right).normalized * 100.0f, Color.red);
-		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward - currChar.transform.right).normalized * 100.0f, Color.red);
-		if (Vector3.Angle (currChar.transform.forward, player.transform.position - currChar.transform.position) <= angle) {
-			if (Physics.Raycast (currChar.transform.position, player.transform.position - currChar.transform.position, out hit, 100.0f)) {
+			playerAngle = 30.0f;
+		updatePlayerInfoForChar (currChar, mb, playerAngle);
+	}
+
+	bool checkToSeeDead(GameObject currChar, MasterBehaviour mb, float sightAngle){
+		Vector3 deadPos;
+		RaycastHit hit;
+		bool updatedSeen = false;
+		List<int> wasRemoved = new List<int> ();
+		int i = 0;
+		foreach (GameObject deadChar in deadSet) {
+			deadPos = deadChar.transform.position;
+			Debug.DrawRay(currChar.transform.position, deadPos - currChar.transform.position, Color.yellow);
+			if (Vector3.Angle(currChar.transform.forward, deadPos - currChar.transform.forward) <= sightAngle){
+				if (Physics.Raycast(currChar.transform.position, deadPos - currChar.transform.position, out hit, sightDist)){
+					if (hit.collider.gameObject == deadChar){
+						seenDeadSet.Add(deadPos);
+						wasRemoved.Add(i);
+						updatedSeen = true;
+						Debug.Log ("dead ones seen: " + seenDeadSet.Count);
+					}
+				}
+			}
+			i++;
+		}
+		foreach (int j in wasRemoved) {
+			deadSet.RemoveAt(j);
+		}
+		return updatedSeen;
+	}
+
+	void updatePlayerInfoForChar(GameObject currChar, MasterBehaviour mb, float playerAngle){
+		RaycastHit hit;
+		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward + currChar.transform.right).normalized * sightDist, Color.red);
+		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward - currChar.transform.right).normalized * sightDist, Color.red);
+		if (Vector3.Angle (currChar.transform.forward, player.transform.position - currChar.transform.position) <= playerAngle) {
+			if (Physics.Raycast (currChar.transform.position, player.transform.position - currChar.transform.position, out hit, sightDist)) {
 				if (hit.collider.gameObject == player) {
 					if(!mb.seesPlayer) {
 						currChar.GetComponents <AudioSource> ()[1].Play ();
 					}
 					mb.seesPlayer = true;
 					mb.seenTime += Time.deltaTime;
-					if(mb.seenTime > 1f) {
+					if(mb.seenTime > 2f) {
 						mb.isShooting = true;
 						mb.seenTime = 0f;
 					}
@@ -143,17 +203,17 @@ public class MasterScheduler : MonoBehaviour {
 				} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
 					mb.seesPlayer = false;
 					mb.seenTime = 0f;
-					mb.seesDeadPeople = false;
-					mb.hearsSomething = false;
-					mb.health = 100.0f;
+//					mb.seesDeadPeople = false;
+//					mb.hearsSomething = false;
+//					mb.health = 100.0f;
 				} else {
 				}
 			} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
 				mb.seesPlayer = false;
 				mb.seenTime = 0f;
-				mb.seesDeadPeople = false;
-				mb.hearsSomething = false;
-				mb.health = 100.0f;
+//				mb.seesDeadPeople = false;
+//				mb.hearsSomething = false;
+//				mb.health = 100.0f;
 			} else {
 			}
 		}
