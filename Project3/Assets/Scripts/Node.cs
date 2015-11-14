@@ -12,10 +12,9 @@ public class Node : IEquatable<Node> {
 	public float g { get; set;}
 	public float h { get; set;}
 	public bool isSwamp { get; set; }
-	public float swampCost { get; set; }
 	public float spaceCost { get; set; }
 
-	public Node (bool isFree, Vector3 pos, int newi, int newj, float heuristic, bool swamp, float sC) {
+	public Node (bool isFree, Vector3 pos, int newi, int newj, float heuristic, float sC) {
 		free = isFree;
 		loc = pos;
 		i = newi;
@@ -23,7 +22,6 @@ public class Node : IEquatable<Node> {
 		f = Mathf.Infinity;
 		g = Mathf.Infinity;
 		h = heuristic;
-		isSwamp = swamp;
 		spaceCost = sC;
 	}
 

@@ -12,16 +12,14 @@ public class ReachGoal: NPCBehaviour {
 	public Vector3 nextCoords { get; set; }
 	public Vector3 transCoords { get; set; }
 	public Vector3 endCoords { get; set; }
-	public List<Vector3> deadPeopleSeen { get; set; }
+//	public List<Vector3> deadPeopleSeen { get; set; }
 
 	public GameObject plane { get; set; }
-	public GameObject swamps { get; set; }
 	public float nodeSize { get; set; }
 	public State state { get; set; }
 	public Grid G;
 
 
-	public float swampCost;
 	private LayerMask dynamicLayer;
 
 	private float arrivalRadius;
@@ -42,12 +40,12 @@ public class ReachGoal: NPCBehaviour {
 		path = new List<Node> ();
 		inArrivalRadius = false;
 		arrivalRadius = 0.0f;
-		Grid G = new Grid(plane, goalPos, nodeSize, swamps);
+		Grid G = new Grid(plane, goalPos, nodeSize);
 		G.initStart ();
 		state = new State (new List<Node> (), new List<Node> (), new Dictionary<Node, Node> (),
-		                  null, null, swampCost, G, null, false, false);
+		                  null, null, G, null, false, false);
 		speedMax = 20.0f;
-		deadPeopleSeen = new List<Vector3> ();
+//		deadPeopleSeen = new List<Vector3> ();
 	}
 
 	public Node nextStep () {

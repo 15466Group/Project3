@@ -9,6 +9,7 @@ public class MasterBehaviour : MonoBehaviour {
 	public float health { get; set; }
 	public bool seesPlayer { get; set; }
 	public bool seesDeadPeople { get; set; }
+	private List<Vector3> deadPeopleSeen;
 
 	public bool hearsSomething { get; set; }
 	public bool isDead { get; set; }
@@ -42,7 +43,7 @@ public class MasterBehaviour : MonoBehaviour {
 
 	private AudioSource gunShot;
 	// Use this for initialization
-	public void Starta (GameObject plane, GameObject swamps, float nodeSize) {
+	public void Starta (GameObject plane, float nodeSize) {
 
 		fixedDeadCollider = false;
 
@@ -64,7 +65,6 @@ public class MasterBehaviour : MonoBehaviour {
 		gc = player.GetComponent<GoalControl> ();
 
 		reachGoal.plane = plane;
-		reachGoal.swamps = swamps;
 		reachGoal.nodeSize = nodeSize;
 		reachGoal.goalPos = poi;
 		reachGoal.Starta ();
@@ -86,7 +86,8 @@ public class MasterBehaviour : MonoBehaviour {
 		lr.enabled = false;
 		if (isDead) {
 			if (!fixedDeadCollider){
-				transform.gameObject.layer = LayerMask.NameToLayer("Obstacles"); //now an obstacle;
+				transform.gameObject.layer = LayerMask.NameToLayer("Dead"); //now dead so avoid this space;
+				transform.gameObject.tag = "Dead";
 				BoxCollider bc = GetComponent<BoxCollider>();
 				bc.center = new Vector3(0f, -0.5f, 0f);
 				fixedDeadCollider = true;
@@ -176,6 +177,6 @@ public class MasterBehaviour : MonoBehaviour {
 	public void updateDeadSet(List<Vector3> seenDeadSet){
 		//do the animation or draw the alert thing
 		seesDeadPeople = true;
-		reachGoal.deadPeopleSeen = seenDeadSet;
+		deadPeopleSeen = seenDeadSet;
 	}
 }

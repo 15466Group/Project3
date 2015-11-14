@@ -9,7 +9,8 @@ public class Grid{
 	private GameObject plane;
 
 	private int obstacleLayer;
-	private int swampLayer;
+	//for deadbodies
+	private int deadLayer;
 	private int dynamicLayer;
 
 	public Node[,] grid;
@@ -18,14 +19,11 @@ public class Grid{
 	private float worldWidth;
 	private float worldHeight;
 	private Vector3 worldNW; //world north west, top left corner of map/plane
-	
-	public GameObject swamps;
 
-	public Grid (GameObject p, Vector3 goalp, float nS, GameObject s) {
+	public Grid (GameObject p, Vector3 goalp, float nS) {
 		plane = p;
 		goalPos = goalp;
 		nodeSize = nS;
-		swamps = s;
 	}
 
 	// Use this for initialization
@@ -41,21 +39,22 @@ public class Grid{
 		worldNW = plane.transform.position - (plane.transform.right * worldWidth / 2.0f) + (plane.transform.forward * worldHeight / 2.0f);
 
 		obstacleLayer = 1 << LayerMask.NameToLayer ("Obstacles");
-		swampLayer = 1 << LayerMask.NameToLayer ("Swamp");
+		deadLayer = 1 << LayerMask.NameToLayer ("Dead");
 		dynamicLayer = 1 << LayerMask.NameToLayer ("Dynamic");
 
 		initializeGrid ();
 		updateGrid (goalPos);
-		for (int i = 0; i < gridWidth; i++) {
-			for (int j = 0; j < gridHeight; j ++) {
-				float sc = grid[i,j].spaceCost;
-				Debug.Log (sc);
-				Color scaledGrey = Color.white * (sc/3.0f);
-				Debug.DrawLine (grid[i,j].loc + Vector3.right*(nodeSize/2.0f), grid[i,j].loc - Vector3.right*(nodeSize/2.0f), scaledGrey, 100);
-				//Debug.DrawLine (grid[i,j].loc + Vector3.forward*(nodeSize/2.0f), grid[i,j].loc - Vector3.forward*(nodeSize/2.0f), scaledGrey, 2, false);
-				
-			}
-		}
+//				for (int i = 0; i < gridWidth; i++) {
+//					for (int j = 0; j < gridHeight; j ++) {
+//						float sc = grid[i,j].spaceCost;
+//						Debug.Log (sc);
+//						Color scaledGrey = Color.white * (sc/3.0f);
+//						Debug.DrawLine (grid[i,j].loc + Vector3.right*(nodeSize/2.0f), grid[i,j].loc - Vector3.right*(nodeSize/2.0f), scaledGrey, 200);
+//						//Debug.DrawLine (grid[i,j].loc + Vector3.forward*(nodeSize/2.0f), grid[i,j].loc - Vector3.forward*(nodeSize/2.0f), scaledGrey, 2, false);
+//						
+//					}
+//				}
+
 	}
 
 	public void initializeGrid(){
@@ -64,25 +63,18 @@ public class Grid{
 				float xp = i * nodeSize + (nodeSize/2.0f) + worldNW.x;
 				float zp = -(j * nodeSize + (nodeSize/2.0f)) + worldNW.z;
 				Vector3 nodeCenter = new Vector3(xp, 0.0f, zp);
-				Collider[] hits = Physics.OverlapSphere(nodeCenter, nodeSize/2.0f, obstacleLayer | swampLayer | dynamicLayer);
+				Collider[] hits = Physics.OverlapSphere(nodeCenter, nodeSize/2.0f, obstacleLayer | deadLayer | dynamicLayer);
 				float h = Vector3.Distance(nodeCenter, goalPos);
 				int len = hits.Length;
 				if(len == 0) { 
-					grid[i,j] = new Node(true, nodeCenter, i, j, h, false, 3.0f);
+					grid[i,j] = new Node(true, nodeCenter, i, j, h, 3.0f);
 				}
 				else {
-					bool isSwamp = checkIfContainsTag(hits, "Swamp");
-					bool free;
-					if ((isSwamp) && len == 1){
-						free = true;
-					}
-					else {
-						free = false;
-					}
-					grid[i,j] = new Node(free, nodeCenter, i, j, h, isSwamp, 3.0f);
+					grid[i,j] = new Node(false, nodeCenter, i, j, h, 3.0f);
 				}
 			}
 		}
+
 	}
 	
 	public void updateGrid(Vector3 g){
@@ -92,35 +84,43 @@ public class Grid{
 				float xp = i * nodeSize + (nodeSize/2.0f) + worldNW.x;
 				float zp = -(j * nodeSize + (nodeSize/2.0f)) + worldNW.z;
 				Vector3 nodeCenter = new Vector3(xp, 0.0f, zp);
-				Collider[] hits = Physics.OverlapSphere(nodeCenter, 50.0f, obstacleLayer | swampLayer | dynamicLayer);
+				Collider[] hits = Physics.OverlapSphere(nodeCenter, 10.0f, obstacleLayer | deadLayer | dynamicLayer);
 				float h = Vector3.Distance(nodeCenter, goalPos);
 				int len = hits.Length;
 				if(len == 0) {
-					grid[i,j] = new Node(true, nodeCenter, i, j, h, grid[i,j].isSwamp, 3.0f);
+					grid[i,j] = new Node(true, nodeCenter, i, j, h, 3.0f);
 				}
 				else {
-					bool isSwamp = checkIfContainsTag(hits, "Swamp");
 					bool free = true;
-					if ((isSwamp) && len == 1){
-						free = true;
-					}
-//					else {
-//						free = false;
-//					}
 					float scacc = 3.0f;
-					float minDist = 50.0f;
+					float minDist = 10.0f;
 					foreach(Collider c in hits) {
 						float dist = Vector3.Distance (c.ClosestPointOnBounds(nodeCenter), nodeCenter);
 						if(dist < nodeSize/2.0f) {
 							free = false;
-						}	
+						}
+						if (c.CompareTag("Dead")){
+							scacc = 3.0f;
+							break;
+						}
 						if (dist < minDist) {
 							//scacc = (Mathf.Exp (dist/50.0f - 1.0f) * 3.0f);
-							scacc = dist / 50.0f * 3.0f;
+							minDist = dist;
+							scacc = (dist / 10.0f) * (dist / 10.0f) * 3.0f;
 						}
 					}
-					grid[i,j] = new Node(free, nodeCenter, i, j, h, grid[i,j].isSwamp, scacc);
+					grid[i,j] = new Node(free, nodeCenter, i, j, h, scacc);
 				}
+			}
+		}
+		for (int i = 0; i < gridWidth; i++) {
+			for (int j = 0; j < gridHeight; j ++) {
+				float sc = grid[i,j].spaceCost;
+				Debug.Log (sc);
+				Color scaledGrey = Color.white * (sc/3.0f);
+				Debug.DrawLine (grid[i,j].loc + Vector3.right*(nodeSize/2.0f), grid[i,j].loc - Vector3.right*(nodeSize/2.0f), scaledGrey, 2);
+				//Debug.DrawLine (grid[i,j].loc + Vector3.forward*(nodeSize/2.0f), grid[i,j].loc - Vector3.forward*(nodeSize/2.0f), scaledGrey, 2, false);
+				
 			}
 		}
 

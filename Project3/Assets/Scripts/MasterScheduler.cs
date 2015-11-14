@@ -8,7 +8,6 @@ public class MasterScheduler : MonoBehaviour {
 	public GameObject characters;
 
 	public GameObject plane;
-	public GameObject swamps;
 	public float nodeSize;
 
 	private int numChars;
@@ -35,7 +34,7 @@ public class MasterScheduler : MonoBehaviour {
 		
 		for (int i = 0; i < numChars; i++) {
 			MasterBehaviour mb = characters.transform.GetChild(i).GetComponent<MasterBehaviour>();
-			mb.Starta(plane, swamps, nodeSize);
+			mb.Starta(plane, nodeSize);
 			behaviourScripts[i] = mb;
 		}
 
@@ -44,14 +43,6 @@ public class MasterScheduler : MonoBehaviour {
 		deadSet = new List<GameObject>();
 		seenDeadSet = new List<Vector3> ();
 
-
-		//get rid of swamp colliders
-		if (swamps != null) {
-			int swampCount = swamps.transform.childCount;
-			for (int k = 0; k < swampCount; k++) {
-				swamps.transform.GetChild (k).GetComponent<MeshCollider> ().enabled = false;
-			}
-		}
 		shootDistance = 10f;
 		sightDist = 100.0f;
 	
