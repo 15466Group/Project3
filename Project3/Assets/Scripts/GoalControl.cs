@@ -35,7 +35,7 @@ public class GoalControl : MonoBehaviour {
 		previousValidPos = transform.position;
 		soldierLayer = 1 << (LayerMask.NameToLayer("Soldier"));
 		obstacleLayer = 1 << (LayerMask.NameToLayer("Obstacles"));
-		health = 5;
+		health = 20;
 		healthTex = new Texture2D(1, 1);
 		healthTex.SetPixel(0,0,Color.green);
 		healthTex.Apply();

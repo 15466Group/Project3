@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Grid {
+public class Grid{
 
 	public float nodeSize;
 	public Vector3 goalPos { get; set; }
@@ -46,6 +46,16 @@ public class Grid {
 
 		initializeGrid ();
 		updateGrid (goalPos);
+		for (int i = 0; i < gridWidth; i++) {
+			for (int j = 0; j < gridHeight; j ++) {
+				float sc = grid[i,j].spaceCost;
+				Debug.Log (sc);
+				Color scaledGrey = Color.white * (sc/3.0f);
+				Debug.DrawLine (grid[i,j].loc + Vector3.right*(nodeSize/2.0f), grid[i,j].loc - Vector3.right*(nodeSize/2.0f), scaledGrey, 100);
+				//Debug.DrawLine (grid[i,j].loc + Vector3.forward*(nodeSize/2.0f), grid[i,j].loc - Vector3.forward*(nodeSize/2.0f), scaledGrey, 2, false);
+				
+			}
+		}
 	}
 
 	public void initializeGrid(){
@@ -58,7 +68,7 @@ public class Grid {
 				float h = Vector3.Distance(nodeCenter, goalPos);
 				int len = hits.Length;
 				if(len == 0) { 
-					grid[i,j] = new Node(true, nodeCenter, i, j, h, false);
+					grid[i,j] = new Node(true, nodeCenter, i, j, h, false, 3.0f);
 				}
 				else {
 					bool isSwamp = checkIfContainsTag(hits, "Swamp");
@@ -69,7 +79,7 @@ public class Grid {
 					else {
 						free = false;
 					}
-					grid[i,j] = new Node(free, nodeCenter, i, j, h, isSwamp);
+					grid[i,j] = new Node(free, nodeCenter, i, j, h, isSwamp, 3.0f);
 				}
 			}
 		}
@@ -82,25 +92,38 @@ public class Grid {
 				float xp = i * nodeSize + (nodeSize/2.0f) + worldNW.x;
 				float zp = -(j * nodeSize + (nodeSize/2.0f)) + worldNW.z;
 				Vector3 nodeCenter = new Vector3(xp, 0.0f, zp);
-				Collider[] hits = Physics.OverlapSphere(nodeCenter, nodeSize/2.0f, obstacleLayer | swampLayer | dynamicLayer);
+				Collider[] hits = Physics.OverlapSphere(nodeCenter, 50.0f, obstacleLayer | swampLayer | dynamicLayer);
 				float h = Vector3.Distance(nodeCenter, goalPos);
 				int len = hits.Length;
 				if(len == 0) {
-					grid[i,j] = new Node(true, nodeCenter, i, j, h, grid[i,j].isSwamp);
+					grid[i,j] = new Node(true, nodeCenter, i, j, h, grid[i,j].isSwamp, 3.0f);
 				}
 				else {
 					bool isSwamp = checkIfContainsTag(hits, "Swamp");
-					bool free;
+					bool free = true;
 					if ((isSwamp) && len == 1){
 						free = true;
 					}
-					else {
-						free = false;
+//					else {
+//						free = false;
+//					}
+					float scacc = 3.0f;
+					float minDist = 50.0f;
+					foreach(Collider c in hits) {
+						float dist = Vector3.Distance (c.ClosestPointOnBounds(nodeCenter), nodeCenter);
+						if(dist < nodeSize/2.0f) {
+							free = false;
+						}	
+						if (dist < minDist) {
+							//scacc = (Mathf.Exp (dist/50.0f - 1.0f) * 3.0f);
+							scacc = dist / 50.0f * 3.0f;
+						}
 					}
-					grid[i,j] = new Node(free, nodeCenter, i, j, h, grid[i,j].isSwamp);
+					grid[i,j] = new Node(free, nodeCenter, i, j, h, grid[i,j].isSwamp, scacc);
 				}
 			}
 		}
+
 	}
 
 //	void OnDrawGizmos() {
@@ -114,6 +137,9 @@ public class Grid {
 //				if (!grid[i,j].free) {
 //					Gizmos.DrawCube (grid [i, j].loc, new Vector3 (nodeSize, 1.0f, nodeSize));
 //				}
+//				float sc = grid[i,j].spaceCost;
+//				Gizmos.color = Color.black * (sc/5.0f);
+//				Gizmos.DrawCube (grid [i, j].loc, new Vector3 (nodeSize, 1.0f, nodeSize));
 //			}
 //		}
 //	}

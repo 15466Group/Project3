@@ -38,7 +38,7 @@ public class Graph : Object {
 		numNodesSeen = 0;
 
 		//infinite heuristic
-		Node estimEndNode = new Node(false, Vector3.zero, 0, 0, Mathf.Infinity, false);
+		Node estimEndNode = new Node(false, Vector3.zero, 0, 0, Mathf.Infinity, false, 3.0f);
 
 		List<Node> failPath = new List<Node> ();
 		failPath.Add (s.endNode);
@@ -89,7 +89,7 @@ public class Graph : Object {
 				if (s.closed.Contains (successor)){
 					continue; //in the closed set
 				}
-				float newCost = current.g + costOfStep(current, successor, s.swampCost);
+				float newCost = current.g + costOfStep(current, successor, s.swampCost, current.spaceCost);
 				if (!s.open.Contains(successor)){
 					s.open.Add (successor);
 				}
@@ -160,11 +160,13 @@ public class Graph : Object {
 	}
 
 	//swamp is for preferred path, some players may prefer swamps
-	float costOfStep(Node currNode, Node nextNode, float swampCost){
+	float costOfStep(Node currNode, Node nextNode, float swampCost, float spaceCost){
 		float cost = Vector3.Distance (currNode.loc, nextNode.loc);
 		if (currNode.isSwamp || nextNode.isSwamp){
-			cost *= swampCost;
+			//cost *= swampCost;
+			//cost *= spaceCost;
 		}
+		cost *= spaceCost;
 		return cost;
 	}
 
