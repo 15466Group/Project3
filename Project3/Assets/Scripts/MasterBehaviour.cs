@@ -18,6 +18,9 @@ public class MasterBehaviour : MonoBehaviour {
 	public bool disturbed { get; set; }
 	public bool sniperPosKnown { get; set; }
 	public Vector3 sniperPos { get; set; }
+	public int alertLevel { get; set; }
+	public int maxAlertLevel { get; set; }
+	public bool needsToRaiseAlertLevel { get; set; }
 
 	public ReachGoal reachGoal { get; set; }
 	private Wander wander;
@@ -79,6 +82,9 @@ public class MasterBehaviour : MonoBehaviour {
 
 		lr = this.GetComponentInParent<LineRenderer> ();
 		seenTime = 0f;
+		alertLevel = 0;
+		maxAlertLevel = 3;
+		needsToRaiseAlertLevel = false;
 //		Debug.Log (transform.name);
 	}
 
@@ -188,5 +194,9 @@ public class MasterBehaviour : MonoBehaviour {
 		reachGoal.updateSniperPos ();
 		Debug.Log ("knows sniper pos");
 //		Debug.Break ();
+	}
+
+	public void raiseAlertLevel(){
+		return;
 	}
 }

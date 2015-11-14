@@ -81,11 +81,7 @@ public class Grid{
 				if (Physics.Raycast(nodeCenter, sniperPos - nodeCenter, out hit, Mathf.Infinity, obstacleLayer)){
 					if (hit.collider.gameObject.CompareTag("MainCamera")){
 						scalar = 3.0f;
-//						Debug.Log ("sees snipe: " + i + ", " + j);
 					}
-//					else {
-//						Debug.Log ("sees wall: " + i + ", " + j);
-//					}
 				}
 				spaceCostScalars[i,j] = scalar;
 			}

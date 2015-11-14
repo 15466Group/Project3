@@ -100,9 +100,19 @@ public class MasterScheduler : MonoBehaviour {
 				if (!mb.isDead) {
 					mb.updateDeadSet (seenDeadSet);
 					//fixme get rid of this
-					mb.updateSniperPos();
+//					mb.updateSniperPos();
+					mb.needsToRaiseAlertLevel = true;
+					//should stop and stare for a few frames
 				}
 			}
+		}
+
+		for (int i = 0; i < numChars; i++) {
+			GameObject currChar = characters.transform.GetChild (i).gameObject;
+			MasterBehaviour mb = behaviourScripts [i];
+			if (mb.needsToRaiseAlertLevel && !mb.isDead)
+				mb.raiseAlertLevel();
+			mb.needsToRaiseAlertLevel = false;
 		}
 
 		//put the pathfinding characters in the pathfinder
@@ -115,24 +125,6 @@ public class MasterScheduler : MonoBehaviour {
 		if (currCharForPath == null)
 			currCharForPath = pathFindingChars.First;
 	
-	}
-
-	void updateStatus(GameObject currChar, MasterBehaviour mb){
-		if (mb.isDead) {
-			if (mb.addToDeadSet){
-				//just died, need to make a noise when dying
-				mb.addToDeadSet = false;
-				deadSet.Add (currChar);
-			}
-			return;
-		}
-		mb.isShooting = false;
-		float playerAngle;
-		if (mb.seesPlayer)
-			playerAngle = 360.0f;
-		else
-			playerAngle = 30.0f;
-		updatePlayerInfoForChar (currChar, mb, playerAngle);
 	}
 
 	bool checkToSeeDead(GameObject currChar, MasterBehaviour mb, float sightAngle){
@@ -162,6 +154,25 @@ public class MasterScheduler : MonoBehaviour {
 		return updatedSeen;
 	}
 
+	void updateStatus(GameObject currChar, MasterBehaviour mb){
+		if (mb.isDead) {
+			if (mb.addToDeadSet) {
+				//just died, need to make a noise when dying
+				mb.addToDeadSet = false;
+				deadSet.Add (currChar);
+			}
+			return;
+		}
+		mb.isShooting = false;
+		int oldAlertLevel = mb.alertLevel;
+		float playerAngle;
+		if (mb.seesPlayer)
+			playerAngle = 360.0f;
+		else
+			playerAngle = 30.0f + (10.0f * mb.alertLevel);
+		updatePlayerInfoForChar (currChar, mb, playerAngle);
+	}
+
 	void updatePlayerInfoForChar(GameObject currChar, MasterBehaviour mb, float playerAngle){
 		RaycastHit hit;
 		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward + currChar.transform.right).normalized * sightDist, Color.red);
@@ -172,6 +183,7 @@ public class MasterScheduler : MonoBehaviour {
 					if(!mb.seesPlayer) {
 						currChar.GetComponents <AudioSource> ()[1].Play ();
 					}
+					mb.needsToRaiseAlertLevel = true;
 					mb.seesPlayer = true;
 					mb.seenTime += Time.deltaTime;
 					if(mb.seenTime > 2f) {
