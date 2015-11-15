@@ -26,6 +26,8 @@ public class Wander : NPCBehaviour {
 		isWanderer = true;
 		isReachingGoal = false;
 		speedMax = 10.0f;
+		speedMaxDefault = 10.0f;
+		inArrivalRadius = false;
 		
 	}
 	

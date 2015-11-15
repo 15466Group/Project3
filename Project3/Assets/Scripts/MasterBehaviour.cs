@@ -22,6 +22,8 @@ public class MasterBehaviour : MonoBehaviour {
 	public int maxAlertLevel { get; set; }
 	public bool needsToRaiseAlertLevel { get; set; }
 	public bool takingCover { get; set; }
+	public Vector3 coverSpot { get; set; }
+	public bool reachedCover { get; set; }
 	public bool isReloading { get; set; }
 	public bool isGoaling { get; set; }
 	public int ammoCount { get; set; }
@@ -32,7 +34,7 @@ public class MasterBehaviour : MonoBehaviour {
 	private Patrol patrol;
 	public string defaultBehaviour;
 	private Vector3 velocity;
-	private TakeCover takeCover;
+	public TakeCover takeCover { get; set; }
 
 	public string idle;
 	public string walking;
@@ -66,6 +68,8 @@ public class MasterBehaviour : MonoBehaviour {
 		isDead = false;
 		addToDeadSet = false;
 		takingCover = false;
+		coverSpot = Vector3.zero;
+		reachedCover = false;
 		sniperPosKnown = false;
 		sniperPos = sP;
 		isGoaling = false;
@@ -74,7 +78,6 @@ public class MasterBehaviour : MonoBehaviour {
 		wander = GetComponent<Wander> ();
 		standstill = GetComponent<StandStill> ();
 		patrol = GetComponent<Patrol> ();
-		takeCover = GetComponent<TakeCover> ();
 		gc = player.GetComponent<GoalControl> ();
 
 		reachGoal.plane = plane;
@@ -85,8 +88,9 @@ public class MasterBehaviour : MonoBehaviour {
 		wander.Starta ();
 		patrol.Starta ();
 		standstill.Starta ();
-		takeCover.Starta ();
-		takeCover.dist = nodeSize;
+		takeCover = new TakeCover (nodeSize, reachGoal.state.sGrid.hiddenSpaceCost, 
+		                           reachGoal.state.sGrid.grid, reachGoal.state.sGrid.spaceCostScalars);
+
 		anim = GetComponent<Animation> ();
 		anim.CrossFade (idle);
 		walkingSpeed = 10.0f;
@@ -121,34 +125,17 @@ public class MasterBehaviour : MonoBehaviour {
 		}
 //		if (!(seesPlayer || seesDeadPeople || hearsSomething)) {
 		if (!isReachingGoal()) {
-//			Debug.Log ("not Reaching Goal");
-//			wander.Updatea();
-//			velocity = wander.velocity;
-			if (sniperPosKnown){
-				takeCover.setGridAndSniperPos(reachGoal.returnGrid(), sniperPosKnown, reachGoal.state.sGrid.hiddenSpaceCost, reachGoal.state.sGrid.spaceCostScalars);
+//			if (!takingCover){
+			if(disturbed) {
+				wander.Updatea();
+				velocity = wander.velocity;
 			}
-//			Debug.Log (seesDeadPeople);
-			if (seesDeadPeople || sniperPosKnown){
-				if (takeCover.inCoverTime < 10.0f){
-					takeCover.Updatea();
-					velocity = takeCover.velocity;
-					takingCover = true;
-				} else {
-					takeCover.Starta ();
-					takingCover = false;
-				}
+			else {
+				doDefaultBehaviour();
 			}
-			if (!takingCover){
-				if(disturbed) {
-					wander.Updatea();
-					velocity = wander.velocity;
-				}
-				else {
-					doDefaultBehaviour();
-				}
-			}
+//			}
 		} else {
-			takingCover = false;
+//			takingCover = false;
 //			Debug.Log("Update GoalPos to: " + reachGoal.goalPos);
 			reachGoal.goalPos = poi;
 			velocity = reachGoal.velocity;
@@ -233,12 +220,18 @@ public class MasterBehaviour : MonoBehaviour {
 
 	public void updateSniperPos(){
 		sniperPosKnown = true;
-		reachGoal.updateSniperPos ();
+//		reachGoal.state.sGrid.sniperPosKnown = true;
+		reachGoal.updateGridSniperPos ();
 //		Debug.Log ("knows sniper pos");
 //		Debug.Break ();
 	}
 
 	public void raiseAlertLevel(){
 		return;
+	}
+
+	//either from hearing, seeing, or knowing another guard was taken out
+	public bool knowsOfSniper(){
+		return (sniperPosKnown || seesDeadPeople);
 	}
 }

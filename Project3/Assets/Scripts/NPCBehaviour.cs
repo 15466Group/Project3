@@ -206,13 +206,13 @@ public class NPCBehaviour : MonoBehaviour {
 //			}
 //		}
 //		if (isReachingGoal) {
-//			if (inArrivalRadius) {
+		if (inArrivalRadius) {
 //				transform.gameObject.layer = 8;
-//				speedMax = 0.0f; 
-//			} else { //exponential growth translated up by 10, capped at originalMaxSpeed
+			speedMax = 0.0f; 
+		} else { //exponential growth translated up by 10, capped at originalMaxSpeed
 //				transform.gameObject.layer = 0;
-//				speedMax = Mathf.Min (Mathf.Pow (1.1f, Vector3.Distance(transform.position, target)) + 10.0f, speedMaxDefault);
-//			}
+			speedMax = Mathf.Min (Mathf.Pow (1.1f, Vector3.Distance(transform.position, target)) + 10.0f, speedMaxDefault);
+		}
 //		}
 	}
 

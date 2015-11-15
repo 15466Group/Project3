@@ -18,7 +18,7 @@ public class ReachGoal: NPCBehaviour {
 	public GameObject plane { get; set; }
 	public float nodeSize { get; set; }
 	public State state { get; set; }
-	public Grid G;
+	private Grid G;
 
 
 	private LayerMask dynamicLayer;
@@ -40,8 +40,8 @@ public class ReachGoal: NPCBehaviour {
 		endCoords = new Vector3 (next.x + 10.0f, 0.0f, next.z + 10.0f);
 		path = new List<Node> ();
 		inArrivalRadius = false;
-		arrivalRadius = 0.0f;
-		Grid G = new Grid(plane, goalPos, nodeSize, sniperPos);
+		arrivalRadius = nodeSize;
+		G = new Grid(plane, goalPos, nodeSize, sniperPos);
 		G.initStart ();
 //		Node estimEndNode = new Node(false, Vector3.zero, 0, 0, Mathf.Infinity, 3.0f);
 //		
@@ -49,6 +49,7 @@ public class ReachGoal: NPCBehaviour {
 		state = new State (new List<Node> (), new List<Node> (), new Dictionary<Node, Node> (),
 		                  null, null, G, null, false, false);
 		speedMax = 20.0f;
+		speedMaxDefault = 20.0f;
 //		deadPeopleSeen = new List<Vector3> ();
 	}
 
@@ -104,16 +105,11 @@ public class ReachGoal: NPCBehaviour {
 		}
 	}
 
-	public void updateSniperPos(){
+	public void updateGridSniperPos(){
 		state.sGrid.sniperPosKnown = true;
 	}
 
 	public Node[,] returnGrid(){
-//		Debug.Log ("state: " + state);
-//		Debug.Log ("sGrid: " + state.sGrid);
-//		Debug.Log ("grid: " + state.sGrid.grid);
-//		Debug.Break ();
-//		state.sGrid.updateGrid (goalPos);
 		return state.sGrid.grid;
 	}
 }

@@ -21,14 +21,12 @@ public class MasterScheduler : MonoBehaviour {
 	private List<GameObject> deadSet;
 	private List<Vector3> seenDeadSet;
 
-	private float timer;
 	private float seenTime;
 	private float shootDistance;
 	private float sightDist;
 
 	// Use this for initialization
 	void Start () {
-		timer = 0.0f;
 		numChars = characters.transform.childCount;
 		Debug.Log (numChars);
 		behaviourScripts = new MasterBehaviour[numChars];
@@ -51,14 +49,16 @@ public class MasterScheduler : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		timer += Time.deltaTime;
 		//loop through the characters, update their status (ie senses, poi, etc)
 		//if the character is not reaching a goal, then wipe it's search state clean
-
 		//loop through chatacters again and do behavior.Updatea
-
 		//finally, pass in array of characters to pathfinding scheduler and let it do its thing
 
+
+		//update anything that has to do with guards with respect to other guards
+		checkGuardRelationship ();
+
+		//update guard status and check relationship between player and handle pathfinding
 		for (int i = 0; i < numChars; i++){
 			GameObject currChar = characters.transform.GetChild(i).gameObject;
 			MasterBehaviour mb = behaviourScripts[i];
@@ -81,6 +81,117 @@ public class MasterScheduler : MonoBehaviour {
 			}
 		}
 
+		//put the pathfinding characters in the pathfinder
+		pathfinder.characters = pathFindingChars;
+		pathfinder.currCharNode = currCharForPath;
+		//do pathfinding stuff
+		pathfinder.Updatea ();
+		if (currCharForPath != null)
+			currCharForPath = currCharForPath.Next;
+		if (currCharForPath == null)
+			currCharForPath = pathFindingChars.First;
+	
+	}
+
+	void updateStatus(GameObject currChar, MasterBehaviour mb){
+		if (mb.isDead) {
+			if (mb.addToDeadSet) {
+				//just died, need to make a noise when dying
+				mb.addToDeadSet = false;
+				deadSet.Add (currChar);
+			}
+			return;
+		}
+		mb.isShooting = false;
+		int oldAlertLevel = mb.alertLevel;
+		float playerAngle;
+		if (mb.seesPlayer)
+			playerAngle = 360.0f;
+		else
+			playerAngle = 30.0f + (10.0f * mb.alertLevel);
+//		Debug.Log ("isGoaling0: " + mb.isGoaling);
+		updateSniperInfoForChar (currChar, mb);
+//		Debug.Log ("isGoaling1: " + mb.isGoaling);
+		updatePlayerInfoForChar (currChar, mb, playerAngle);
+//		Debug.Log ("isGoaling2: " + mb.isGoaling);
+	}
+
+	void updateSniperInfoForChar(GameObject currChar, MasterBehaviour mb){
+		if (mb.knowsOfSniper ()) {
+			if (!mb.seesPlayer)
+				mb.takingCover = true;
+			if (!mb.isGoaling && !mb.reachedCover) {
+				mb.poi = mb.takeCover.coverPoint (mb.sniperPosKnown, currChar.transform.position);
+				mb.isGoaling = true;
+				mb.coverSpot = mb.poi;
+			}
+			if (Vector3.Distance (mb.coverSpot, currChar.transform.position) <= nodeSize && !mb.seesPlayer){
+				mb.reachedCover = true;
+				Debug.Log(mb.gameObject.name + " reached cover");
+				mb.isGoaling = false;
+			} else {
+				Debug.Log (mb.gameObject.name + " not reached cover");
+				mb.reachedCover = false;
+			}
+		} else {
+			mb.takingCover = false;
+		}
+	}
+
+	void updatePlayerInfoForChar(GameObject currChar, MasterBehaviour mb, float playerAngle){
+		RaycastHit hit;
+		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward + currChar.transform.right).normalized * sightDist, Color.red);
+		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward - currChar.transform.right).normalized * sightDist, Color.red);
+		if (Vector3.Angle (currChar.transform.forward, player.transform.position - currChar.transform.position) <= playerAngle) {
+			if (Physics.Raycast (currChar.transform.position, player.transform.position - currChar.transform.position, out hit, sightDist)) {
+				if (hit.collider.gameObject == player) {
+					if(!mb.seesPlayer) {
+						currChar.GetComponents <AudioSource> ()[1].Play ();
+					}
+					mb.needsToRaiseAlertLevel = true;
+					mb.seesPlayer = true;
+					mb.seenTime += Time.deltaTime;
+					if(mb.seenTime > 2f) {
+						mb.isShooting = true;
+						mb.seenTime = 0f;
+					}
+					mb.poi = player.transform.position;
+					mb.isGoaling = true;
+					mb.disturbed = true;
+					mb.takingCover = false;
+				//reaches poi
+				} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
+//					mb.seesPlayer = false;
+					mb.seenTime = 0f;
+					mb.isGoaling = false;
+//					mb.seesDeadPeople = false;
+//					mb.hearsSomething = false;
+//					mb.health = 100.0f;
+				} else {
+					if(mb.seesPlayer) {
+						//saw the character turn some direction, so search in that direction even though does not
+						//see player anymore
+						mb.poi = player.transform.position + player.transform.forward * 10f;
+						Debug.Log ("extending");
+						mb.isGoaling = true;
+						mb.takingCover = false;
+					}
+					mb.seesPlayer = false;
+				}
+			//reaches poi
+			} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
+//				mb.seesPlayer = false;
+				mb.seenTime = 0f;
+				mb.isGoaling = false;
+//				mb.seesDeadPeople = false;
+//				mb.hearsSomething = false;
+//				mb.health = 100.0f;
+			} else {
+			}
+		}
+	}
+
+	void checkGuardRelationship(){
 		//add dead characters to seenDeadSet if an alive character sees a dead one
 		float sightAngle = 30.0f;
 		int updatedDeadSet = 0;
@@ -91,7 +202,7 @@ public class MasterScheduler : MonoBehaviour {
 				updatedDeadSet += checkToSeeDead(currChar, mb, sightAngle);
 			}
 		}
-
+		
 		//seenDeadSet now updated so pass this along to every character because assumed they are now notified of all dead positions
 		if (updatedDeadSet > 0) {
 			for (int i = 0; i < numChars; i++) {
@@ -106,7 +217,7 @@ public class MasterScheduler : MonoBehaviour {
 				}
 			}
 		}
-
+		
 		for (int i = 0; i < numChars; i++) {
 			GameObject currChar = characters.transform.GetChild (i).gameObject;
 			MasterBehaviour mb = behaviourScripts [i];
@@ -114,17 +225,6 @@ public class MasterScheduler : MonoBehaviour {
 				mb.raiseAlertLevel();
 			mb.needsToRaiseAlertLevel = false;
 		}
-
-		//put the pathfinding characters in the pathfinder
-		pathfinder.characters = pathFindingChars;
-		pathfinder.currCharNode = currCharForPath;
-		//do pathfinding stuff
-		pathfinder.Updatea ();
-		if (currCharForPath != null)
-			currCharForPath = currCharForPath.Next;
-		if (currCharForPath == null)
-			currCharForPath = pathFindingChars.First;
-	
 	}
 
 	int checkToSeeDead(GameObject currChar, MasterBehaviour mb, float sightAngle){
@@ -154,72 +254,5 @@ public class MasterScheduler : MonoBehaviour {
 			deadSet.RemoveAt(j);
 		}
 		return updatedSeen;
-	}
-
-	void updateStatus(GameObject currChar, MasterBehaviour mb){
-		if (mb.isDead) {
-			if (mb.addToDeadSet) {
-				//just died, need to make a noise when dying
-				mb.addToDeadSet = false;
-				deadSet.Add (currChar);
-			}
-			return;
-		}
-		mb.isShooting = false;
-		int oldAlertLevel = mb.alertLevel;
-		float playerAngle;
-		if (mb.seesPlayer)
-			playerAngle = 360.0f;
-		else
-			playerAngle = 30.0f + (10.0f * mb.alertLevel);
-		updatePlayerInfoForChar (currChar, mb, playerAngle);
-	}
-
-	void updatePlayerInfoForChar(GameObject currChar, MasterBehaviour mb, float playerAngle){
-		RaycastHit hit;
-		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward + currChar.transform.right).normalized * sightDist, Color.red);
-		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward - currChar.transform.right).normalized * sightDist, Color.red);
-		if (Vector3.Angle (currChar.transform.forward, player.transform.position - currChar.transform.position) <= playerAngle) {
-			if (Physics.Raycast (currChar.transform.position, player.transform.position - currChar.transform.position, out hit, sightDist)) {
-				if (hit.collider.gameObject == player) {
-					if(!mb.seesPlayer) {
-						currChar.GetComponents <AudioSource> ()[1].Play ();
-					}
-					mb.needsToRaiseAlertLevel = true;
-					mb.seesPlayer = true;
-					mb.seenTime += Time.deltaTime;
-					if(mb.seenTime > 2f) {
-						mb.isShooting = true;
-						mb.seenTime = 0f;
-					}
-					mb.poi = player.transform.position;
-					mb.isGoaling = true;
-					mb.disturbed = true;
-				} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
-//					mb.seesPlayer = false;
-					mb.seenTime = 0f;
-					mb.isGoaling = false;
-//					mb.seesDeadPeople = false;
-//					mb.hearsSomething = false;
-//					mb.health = 100.0f;
-				} else {
-					if(mb.seesPlayer) {
-						mb.poi = player.transform.position + player.transform.forward * 10f;
-						Debug.Log ("extending");
-						mb.isGoaling = true;
-					}
-					mb.seesPlayer = false;
-				}
-
-			} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
-//				mb.seesPlayer = false;
-				mb.seenTime = 0f;
-				mb.isGoaling = false;
-//				mb.seesDeadPeople = false;
-//				mb.hearsSomething = false;
-//				mb.health = 100.0f;
-			} else {
-			}
-		}
 	}
 }

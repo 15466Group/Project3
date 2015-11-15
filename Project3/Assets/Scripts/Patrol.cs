@@ -10,6 +10,7 @@ public class Patrol : NPCBehaviour {
 	public override void Starta () {
 		base.Starta ();
 		speedMax = 10.0f;
+		speedMaxDefault = 10.0f;
 		accMag = 50.0f;
 		seconds = 0.0f;
 		direction = new Vector3 (direction.x, 0.0f, direction.z).normalized * 200.0f;
