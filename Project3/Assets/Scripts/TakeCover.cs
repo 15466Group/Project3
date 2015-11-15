@@ -39,10 +39,10 @@ public class TakeCover {
 				Node node = nodes[i,j];
 				if (node.free && spaceCosts[i,j] == hiddenSpaceCost){
 					float distance = Vector3.Distance(playerPos, node.loc);
-					if (distance <= nodeSize){
-//						Debug.Log ("found one");
-						return node.loc;
-					} 
+//					if (distance <= nodeSize){
+////						Debug.Log ("found one");
+//						return node.loc;
+//					} 
 					if (distance < minDist){
 						minDist = distance;
 						best = node.loc;

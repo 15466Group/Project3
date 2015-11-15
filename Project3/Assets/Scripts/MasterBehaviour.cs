@@ -150,6 +150,7 @@ public class MasterBehaviour : MonoBehaviour {
 			standstill.Updatea ();
 			velocity = standstill.velocity;
 		} else if (string.Compare("Patrol", defaultBehaviour) == 0) {
+			Debug.Log (transform.gameObject.name + ": defaulting");
 			patrol.Updatea ();
 			velocity = patrol.velocity;
 		} else {

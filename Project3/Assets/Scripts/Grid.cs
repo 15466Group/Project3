@@ -119,42 +119,64 @@ public class Grid{
 				Collider[] hits = Physics.OverlapSphere(nodeCenter, overlapRadius, obstacleLayer | deadLayer | dynamicLayer);
 				float h = Vector3.Distance(nodeCenter, goalPos);
 				int len = hits.Length;
-//				float spaceCostScalar = Mathf.Infinity;
 				if (sniperPosKnown){
+					bool free = true;
+					foreach(Collider c in hits){
+						float dist = Vector3.Distance (c.ClosestPointOnBounds(nodeCenter), nodeCenter);
+						//want to check everything in hits to see if contained in the cell
+						if(dist < nodeSize/2.0f) {
+							free = false;
+						}
+					}
 //					spaceCostScalar = spaceCostScalars[i,j];
-					grid[i,j] = new Node(true, nodeCenter, i, j, h, spaceCostScalars[i,j]);
+//					grid[i,j] = new Node(free, nodeCenter, i, j, h, spaceCostScalars[i,j]);
+					updateNode(grid[i,j], h, free, spaceCostScalars[i,j]);
 //					Debug.Log ("sniperPosKnown");
 				}
 				else {
 					if(len == 0) {
-						grid[i,j] = new Node(true, nodeCenter, i, j, h, initSpaceCost);
+//						grid[i,j] = new Node(true, nodeCenter, i, j, h, initSpaceCost);
+						updateNode(grid[i,j], h, true, initSpaceCost);
 					}
 					else {
 						bool free = true;
+						bool foundDead = false;
 						float spaceCost = initSpaceCost;
 						float minDist = overlapRadius;
 	//					float bool
 						foreach(Collider c in hits) {
 							float dist = Vector3.Distance (c.ClosestPointOnBounds(nodeCenter), nodeCenter);
+							//want to check everything in hits to see if contained in the cell
 							if(dist < nodeSize/2.0f) {
 								free = false;
 							}
 							if (c.CompareTag("Dead")){
-								spaceCost = initSpaceCost;
-								break;
+								spaceCost = initSpaceCost; //stay away from here
+								foundDead = true;
 							}
-							//only look at the obstacle closest to the node to weight the heuristic with spaceCost
-							if (dist < minDist) {
-								minDist = dist;
-								spaceCost = (dist / overlapRadius) * (dist / overlapRadius) * initSpaceCost;
+							if (!foundDead){
+								//only look at the obstacle closest to the node to weight the heuristic with spaceCost
+								if (dist < minDist) {
+									minDist = dist;
+									spaceCost = (dist / overlapRadius) * (dist / overlapRadius) * initSpaceCost;
+								}
 							}
 						}
-						grid[i,j] = new Node(free, nodeCenter, i, j, h, spaceCost);
+//						grid[i,j] = new Node(free, nodeCenter, i, j, h, spaceCost);
+						updateNode(grid[i,j], h, free, spaceCost);
 					}
 				}
 			}
 		}
 		drawShadeLines ();
+	}
+
+	void updateNode(Node n, float h, bool free, float spaceCost){
+		n.free = free;
+		n.h = h;
+		n.spaceCost = spaceCost;
+		n.g = Mathf.Infinity;
+		n.f = Mathf.Infinity;
 	}
 
 	void drawShadeLines(){

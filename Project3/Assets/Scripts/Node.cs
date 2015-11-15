@@ -11,7 +11,6 @@ public class Node : IEquatable<Node> {
 	public float f { get; set;}
 	public float g { get; set;}
 	public float h { get; set;}
-	public bool isSwamp { get; set; }
 	public float spaceCost { get; set; }
 
 	public Node (bool isFree, Vector3 pos, int newi, int newj, float heuristic, float sC) {
