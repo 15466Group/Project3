@@ -23,11 +23,8 @@ public class TakeCover {
 		numCols = nodes.GetLength (1);
 	}
 
-	public Vector3 coverPoint(bool sniperPosKnown, Vector3 playerPos){
-		if (sniperPosKnown)
-			return findClosestNode(playerPos);
-		else
-			return findClosestBuildingPos(playerPos);
+	public Vector3 coverPoint(Vector3 playerPos){
+		return findClosestNode(playerPos);
 	}
 
 	//searches through his grid and finds a node that provides cover from the sniper

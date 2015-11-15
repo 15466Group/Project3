@@ -121,7 +121,7 @@ public class MasterScheduler : MonoBehaviour {
 			if (!mb.seesPlayer)
 				mb.takingCover = true;
 			if (!mb.isGoaling && !mb.reachedCover) {
-				mb.poi = mb.takeCover.coverPoint (mb.sniperPosKnown, currChar.transform.position);
+				mb.poi = mb.takeCover.coverPoint (currChar.transform.position);
 				mb.isGoaling = true;
 				mb.coverSpot = mb.poi;
 			}
@@ -191,6 +191,12 @@ public class MasterScheduler : MonoBehaviour {
 		}
 	}
 
+
+
+
+
+
+
 	void checkGuardRelationship(){
 		//add dead characters to seenDeadSet if an alive character sees a dead one
 		float sightAngle = 30.0f;
@@ -210,8 +216,7 @@ public class MasterScheduler : MonoBehaviour {
 				MasterBehaviour mb = behaviourScripts [i];
 				if (!mb.isDead) {
 					mb.updateDeadSet (seenDeadSet);
-					//fixme get rid of this
-					mb.updateSniperPos();
+//					mb.updateSniperPos();
 					mb.needsToRaiseAlertLevel = true;
 					//should stop and stare for a few frames
 				}
