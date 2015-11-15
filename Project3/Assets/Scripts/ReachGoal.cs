@@ -43,6 +43,9 @@ public class ReachGoal: NPCBehaviour {
 		arrivalRadius = 0.0f;
 		Grid G = new Grid(plane, goalPos, nodeSize, sniperPos);
 		G.initStart ();
+//		Node estimEndNode = new Node(false, Vector3.zero, 0, 0, Mathf.Infinity, 3.0f);
+//		
+//		List<Node> estimPath = new List<Node> ();
 		state = new State (new List<Node> (), new List<Node> (), new Dictionary<Node, Node> (),
 		                  null, null, G, null, false, false);
 		speedMax = 20.0f;
@@ -103,5 +106,14 @@ public class ReachGoal: NPCBehaviour {
 
 	public void updateSniperPos(){
 		state.sGrid.sniperPosKnown = true;
+	}
+
+	public Node[,] returnGrid(){
+//		Debug.Log ("state: " + state);
+//		Debug.Log ("sGrid: " + state.sGrid);
+//		Debug.Log ("grid: " + state.sGrid.grid);
+//		Debug.Break ();
+//		state.sGrid.updateGrid (goalPos);
+		return state.sGrid.grid;
 	}
 }

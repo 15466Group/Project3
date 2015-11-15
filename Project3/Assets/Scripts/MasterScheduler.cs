@@ -83,24 +83,24 @@ public class MasterScheduler : MonoBehaviour {
 
 		//add dead characters to seenDeadSet if an alive character sees a dead one
 		float sightAngle = 30.0f;
-		bool updatedDeadSet = false;
+		int updatedDeadSet = 0;
 		for (int i = 0; i < numChars; i++) {
 			GameObject currChar = characters.transform.GetChild (i).gameObject;
 			MasterBehaviour mb = behaviourScripts [i];
 			if (!mb.isDead){
-				updatedDeadSet = checkToSeeDead(currChar, mb, sightAngle);
+				updatedDeadSet += checkToSeeDead(currChar, mb, sightAngle);
 			}
 		}
 
 		//seenDeadSet now updated so pass this along to every character because assumed they are now notified of all dead positions
-		if (updatedDeadSet) {
+		if (updatedDeadSet > 0) {
 			for (int i = 0; i < numChars; i++) {
 				GameObject currChar = characters.transform.GetChild (i).gameObject;
 				MasterBehaviour mb = behaviourScripts [i];
 				if (!mb.isDead) {
 					mb.updateDeadSet (seenDeadSet);
 					//fixme get rid of this
-//					mb.updateSniperPos();
+					mb.updateSniperPos();
 					mb.needsToRaiseAlertLevel = true;
 					//should stop and stare for a few frames
 				}
@@ -127,22 +127,24 @@ public class MasterScheduler : MonoBehaviour {
 	
 	}
 
-	bool checkToSeeDead(GameObject currChar, MasterBehaviour mb, float sightAngle){
+	int checkToSeeDead(GameObject currChar, MasterBehaviour mb, float sightAngle){
 		Vector3 deadPos;
 		RaycastHit hit;
-		bool updatedSeen = false;
+		int updatedSeen = 0;
 		List<int> wasRemoved = new List<int> ();
 		int i = 0;
 		foreach (GameObject deadChar in deadSet) {
 			deadPos = deadChar.transform.position;
 			Debug.DrawRay(currChar.transform.position, deadPos - currChar.transform.position, Color.yellow);
-			if (Vector3.Angle(currChar.transform.forward, deadPos - currChar.transform.forward) <= sightAngle){
+			if (Vector3.Angle(currChar.transform.forward, deadPos - currChar.transform.position) <= sightAngle){
 				if (Physics.Raycast(currChar.transform.position, deadPos - currChar.transform.position, out hit, sightDist)){
 					if (hit.collider.gameObject == deadChar){
 						seenDeadSet.Add(deadPos);
 						wasRemoved.Add(i);
-						updatedSeen = true;
+						updatedSeen += 1;
 						Debug.Log ("dead ones seen: " + seenDeadSet.Count);
+						//he's seen a dead patrol man so he starts going to hide, and while hes going he tells others to hide
+						//this takes a while
 					}
 				}
 			}

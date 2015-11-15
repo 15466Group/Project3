@@ -24,10 +24,11 @@ public class Grid{
 
 	private Vector3 sniperPos;
 	public bool sniperPosKnown { get; set; }
-	private float[,] spaceCostScalars;
+	public float[,] spaceCostScalars { get; set; }
 
 	private float initSpaceCost;
 	private float overlapRadius;
+	public float hiddenSpaceCost { get; set; }
 
 	public Grid (GameObject p, Vector3 goalp, float nS, Vector3 sP) {
 		plane = p;
@@ -40,6 +41,7 @@ public class Grid{
 	public void initStart () {
 		initSpaceCost = 3.0f;
 		overlapRadius = 10.0f;
+		hiddenSpaceCost = 1.0f;
 		worldWidth = plane.transform.lossyScale.x * 10.0f; //plane
 		worldHeight = plane.transform.lossyScale.z * 10.0f; //plane
 
@@ -72,15 +74,15 @@ public class Grid{
 			for (int j = 0; j < gridHeight; j++) {
 				float xp = i * nodeSize + (nodeSize/2.0f) + worldNW.x;
 				float zp = -(j * nodeSize + (nodeSize/2.0f)) + worldNW.z;
-				//hidden from the sniper
-				float scalar = 1.0f;
+				//hidden from the sniper so small value
+				float scalar = hiddenSpaceCost;
 				float charHeight = 5.0f;
 				Vector3 nodeCenter = new Vector3(xp, charHeight, zp);
 //				Debug.DrawLine(nodeCenter, sniperPos, Color.magenta, 100f);
 				//can see the sniper from this node, so vice versa
 				if (Physics.Raycast(nodeCenter, sniperPos - nodeCenter, out hit, Mathf.Infinity, obstacleLayer)){
 					if (hit.collider.gameObject.CompareTag("MainCamera")){
-						scalar = 3.0f;
+						scalar = initSpaceCost;
 					}
 				}
 				spaceCostScalars[i,j] = scalar;
@@ -98,10 +100,10 @@ public class Grid{
 				float h = Vector3.Distance(nodeCenter, goalPos);
 				int len = hits.Length;
 				if(len == 0) { 
-					grid[i,j] = new Node(true, nodeCenter, i, j, h, initSpaceCost);
+					grid[i,j] = new Node(true, nodeCenter, i, j, h, spaceCostScalars[i,j]);
 				}
 				else {
-					grid[i,j] = new Node(false, nodeCenter, i, j, h, initSpaceCost);
+					grid[i,j] = new Node(false, nodeCenter, i, j, h, spaceCostScalars[i,j]);
 				}
 			}
 		}
@@ -217,6 +219,4 @@ public class Grid{
 
 		return new Vector3(i, 0.0f, j);
 	}
-
-
 }

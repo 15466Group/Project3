@@ -21,6 +21,9 @@ public class MasterBehaviour : MonoBehaviour {
 	public int alertLevel { get; set; }
 	public int maxAlertLevel { get; set; }
 	public bool needsToRaiseAlertLevel { get; set; }
+	public bool takingCover { get; set; }
+	public bool isReloading { get; set; }
+	public int ammoCount { get; set; }
 
 	public ReachGoal reachGoal { get; set; }
 	private Wander wander;
@@ -28,12 +31,15 @@ public class MasterBehaviour : MonoBehaviour {
 	private Patrol patrol;
 	public string defaultBehaviour;
 	private Vector3 velocity;
+	private TakeCover takeCover;
 
 	public string idle;
 	public string walking;
 	public string running;
 	public string dying;
 	public string hit;
+	public string crouchIdle;
+	public string crouchRun;
 
 	public float seenTime;
 
@@ -58,6 +64,7 @@ public class MasterBehaviour : MonoBehaviour {
 		disturbed = false;
 		isDead = false;
 		addToDeadSet = false;
+		takingCover = false;
 		sniperPosKnown = false;
 		sniperPos = sP;
 
@@ -65,6 +72,7 @@ public class MasterBehaviour : MonoBehaviour {
 		wander = GetComponent<Wander> ();
 		standstill = GetComponent<StandStill> ();
 		patrol = GetComponent<Patrol> ();
+		takeCover = GetComponent<TakeCover> ();
 		gc = player.GetComponent<GoalControl> ();
 
 		reachGoal.plane = plane;
@@ -75,6 +83,7 @@ public class MasterBehaviour : MonoBehaviour {
 		wander.Starta ();
 		patrol.Starta ();
 		standstill.Starta ();
+		takeCover.Starta ();
 		anim = GetComponent<Animation> ();
 		anim.CrossFade (idle);
 		walkingSpeed = 10.0f;
@@ -85,6 +94,8 @@ public class MasterBehaviour : MonoBehaviour {
 		alertLevel = 0;
 		maxAlertLevel = 3;
 		needsToRaiseAlertLevel = false;
+		isReloading = false;
+		ammoCount = 0;
 //		Debug.Log (transform.name);
 	}
 
@@ -102,22 +113,39 @@ public class MasterBehaviour : MonoBehaviour {
 			return;
 		}
 		//and if the character is facing the character
-		if (isShooting && !gunShot.isPlaying && !gc.isDead) {
+		if (isShooting && !gunShot.isPlaying && !gc.isDead && !isReloading) {
 			shoot ();
 		}
 //		if (!(seesPlayer || seesDeadPeople || hearsSomething)) {
-		if (!(seesPlayer || hearsSomething)) {
-//			Debug.Log ("Wander");
+		if (!isReachingGoal()) {
+//			Debug.Log ("not Reaching Goal");
 //			wander.Updatea();
 //			velocity = wander.velocity;
-			if(disturbed) {
-				wander.Updatea();
-				velocity = wander.velocity;
+			if (sniperPosKnown){
+				takeCover.setGridAndSniperPos(reachGoal.returnGrid(), sniperPosKnown, reachGoal.state.sGrid.hiddenSpaceCost);
 			}
-			else {
-				doDefaultBehaviour();
+//			Debug.Log (seesDeadPeople);
+			if (seesDeadPeople || sniperPosKnown){
+				if (takeCover.inCoverTime < 10.0f){
+					takeCover.Updatea();
+					velocity = takeCover.velocity;
+					takingCover = true;
+				} else {
+					takeCover.Starta ();
+					takingCover = false;
+				}
+			}
+			if (!takingCover){
+				if(disturbed) {
+					wander.Updatea();
+					velocity = wander.velocity;
+				}
+				else {
+					doDefaultBehaviour();
+				}
 			}
 		} else {
+			takingCover = false;
 //			Debug.Log("Update GoalPos to: " + reachGoal.goalPos);
 			reachGoal.goalPos = poi;
 			velocity = reachGoal.velocity;
@@ -174,12 +202,22 @@ public class MasterBehaviour : MonoBehaviour {
 			return;
 		}
 		float mag = velocity.magnitude;
-		if (mag > 0.0f && mag <= walkingSpeed) {
-			anim.CrossFade (walking);
-		} else if (mag > walkingSpeed) {
-			anim.CrossFade (running);
+		if (takingCover){
+			if (mag > 0.0f && mag <= walkingSpeed) {
+				anim.CrossFade (crouchRun);
+			} else if (mag > walkingSpeed) {
+				anim.CrossFade (crouchRun);
+			} else {
+				anim.CrossFade (crouchIdle);
+			}
 		} else {
-			anim.CrossFade (idle);
+			if (mag > 0.0f && mag <= walkingSpeed) {
+				anim.CrossFade (walking);
+			} else if (mag > walkingSpeed) {
+				anim.CrossFade (running);
+			} else {
+				anim.CrossFade (idle);
+			}
 		}
 	}
 
@@ -192,7 +230,7 @@ public class MasterBehaviour : MonoBehaviour {
 	public void updateSniperPos(){
 		sniperPosKnown = true;
 		reachGoal.updateSniperPos ();
-		Debug.Log ("knows sniper pos");
+//		Debug.Log ("knows sniper pos");
 //		Debug.Break ();
 	}
 
