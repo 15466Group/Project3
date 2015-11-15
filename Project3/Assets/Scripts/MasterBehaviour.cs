@@ -23,6 +23,7 @@ public class MasterBehaviour : MonoBehaviour {
 	public bool needsToRaiseAlertLevel { get; set; }
 	public bool takingCover { get; set; }
 	public bool isReloading { get; set; }
+	public bool isGoaling { get; set; }
 	public int ammoCount { get; set; }
 
 	public ReachGoal reachGoal { get; set; }
@@ -67,6 +68,7 @@ public class MasterBehaviour : MonoBehaviour {
 		takingCover = false;
 		sniperPosKnown = false;
 		sniperPos = sP;
+		isGoaling = false;
 
 		reachGoal = GetComponent<ReachGoal> ();
 		wander = GetComponent<Wander> ();
@@ -171,8 +173,9 @@ public class MasterBehaviour : MonoBehaviour {
 	}
 
 	public bool isReachingGoal(){
-//		return (seesPlayer || seesDeadPeople || hearsSomething) && !isDead;
-		return (seesPlayer || hearsSomething) && !isDead;
+		//		return (seesPlayer || seesDeadPeople || hearsSomething) && !isDead;
+		//		return (seesPlayer || hearsSomething) && !isDead;
+		return isGoaling && !isDead;
 	}
 
 	public void getHit(int damage) {

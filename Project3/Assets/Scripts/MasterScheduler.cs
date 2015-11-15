@@ -193,18 +193,28 @@ public class MasterScheduler : MonoBehaviour {
 						mb.seenTime = 0f;
 					}
 					mb.poi = player.transform.position;
+					mb.isGoaling = true;
 					mb.disturbed = true;
 				} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
-					mb.seesPlayer = false;
+//					mb.seesPlayer = false;
 					mb.seenTime = 0f;
+					mb.isGoaling = false;
 //					mb.seesDeadPeople = false;
 //					mb.hearsSomething = false;
 //					mb.health = 100.0f;
 				} else {
+					if(mb.seesPlayer) {
+						mb.poi = player.transform.position + player.transform.forward * 10f;
+						Debug.Log ("extending");
+						mb.isGoaling = true;
+					}
+					mb.seesPlayer = false;
 				}
+
 			} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
-				mb.seesPlayer = false;
+//				mb.seesPlayer = false;
 				mb.seenTime = 0f;
+				mb.isGoaling = false;
 //				mb.seesDeadPeople = false;
 //				mb.hearsSomething = false;
 //				mb.health = 100.0f;
