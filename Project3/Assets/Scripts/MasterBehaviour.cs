@@ -84,6 +84,7 @@ public class MasterBehaviour : MonoBehaviour {
 		patrol.Starta ();
 		standstill.Starta ();
 		takeCover.Starta ();
+		takeCover.dist = nodeSize;
 		anim = GetComponent<Animation> ();
 		anim.CrossFade (idle);
 		walkingSpeed = 10.0f;
@@ -122,7 +123,7 @@ public class MasterBehaviour : MonoBehaviour {
 //			wander.Updatea();
 //			velocity = wander.velocity;
 			if (sniperPosKnown){
-				takeCover.setGridAndSniperPos(reachGoal.returnGrid(), sniperPosKnown, reachGoal.state.sGrid.hiddenSpaceCost);
+				takeCover.setGridAndSniperPos(reachGoal.returnGrid(), sniperPosKnown, reachGoal.state.sGrid.hiddenSpaceCost, reachGoal.state.sGrid.spaceCostScalars);
 			}
 //			Debug.Log (seesDeadPeople);
 			if (seesDeadPeople || sniperPosKnown){

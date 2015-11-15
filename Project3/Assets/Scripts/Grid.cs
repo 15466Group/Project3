@@ -154,7 +154,7 @@ public class Grid{
 				}
 			}
 		}
-//		drawShadeLines ();
+		drawShadeLines ();
 	}
 
 	void drawShadeLines(){

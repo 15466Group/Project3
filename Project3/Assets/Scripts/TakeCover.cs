@@ -9,10 +9,12 @@ public class TakeCover : NPCBehaviour {
 
 	public bool sniperPosKnown { get; set; }
 	public float inCoverTime { get; set; }
-	public Node[,] nodes { get; set; }
+	private Node[,] nodes;
+	private float[,] spaceCosts;
 
-	private float dist;
+	public float dist { get; set; }
 	private float hiddenSpaceCost;
+	private bool foundCover;
 
 	// Use this for initialization
 	public override void Starta () {
@@ -22,22 +24,26 @@ public class TakeCover : NPCBehaviour {
 		isWanderer = false;
 		isReachingGoal = true;
 		nodes = null;
-		dist = 10.0f;
+		spaceCosts = null;;
+		foundCover = false;
 		speedMax = 20.0f;
 		hiddenSpaceCost = Mathf.Infinity;
 	}
 	
 	// Update is called once per frame
 	public override void Updatea () {
-		if (Vector3.Distance (target, transform.position) > dist) {
-			if (sniperPosKnown && nodes != null) {
+		if (!foundCover) {
+			if (sniperPosKnown && nodes != null && spaceCosts != null) {
 				target = findClosestNode ();
 			} else {
 				target = findClosestBuildingPos ();
 			}
-			base.Updatea ();
-		} else {
+		}
+		Debug.DrawRay (transform.position, target - transform.position, Color.cyan);
+		if (Vector3.Distance (transform.position, target) < dist) {
 			inCoverTime += Time.deltaTime;
+		} else {
+			base.Updatea ();
 		}
 	}
 
@@ -45,27 +51,39 @@ public class TakeCover : NPCBehaviour {
 	private Vector3 findClosestNode(){
 		int numRows = nodes.GetLength (0);
 		int numCols = nodes.GetLength (1);
+		float minDist = Mathf.Infinity;
+		Vector3 best = transform.position;
 		for (int i = 0; i < numRows; i++) {
-			for (int j = 0; j < numCols; j++){
+			for (int j = 0; j < numCols; j++) {
 				Node node = nodes[i,j];
-				if (Vector3.Distance(transform.position, node.loc) < 5 * dist){
-					if (node.spaceCost == hiddenSpaceCost){
+				if (node.free && spaceCosts[i,j] == hiddenSpaceCost){
+					float distance = Vector3.Distance(transform.position, node.loc);
+					if (distance < 2 * dist){
+						Debug.Log ("found one");
+						foundCover = true;
 						return node.loc;
+					} 
+					if (distance < minDist){
+						minDist = distance;
+						best = node.loc;
 					}
 				}
 			}
 		}
-		return transform.position;
+		Debug.Log ("finally found one");
+		foundCover = true;
+		return best;
 	}
 
 	private Vector3 findClosestBuildingPos(){
 		return Vector3.zero;
 	}
 
-	public void setGridAndSniperPos(Node[,] grid, bool sPK, float hSPC) {
+	public void setGridAndSniperPos(Node[,] grid, bool sPK, float hSPC, float[,] sPC) {
 		sniperPosKnown = sPK;
 		nodes = grid;
 		hiddenSpaceCost = hSPC;
+		spaceCosts = sPC;
 	}
 
 }
