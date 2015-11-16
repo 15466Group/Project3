@@ -126,11 +126,17 @@ public class MasterBehaviour : MonoBehaviour {
 //		if (!(seesPlayer || seesDeadPeople || hearsSomething)) {
 		if (!isReachingGoal()) {
 //			if (!takingCover){
-			if(disturbed) {
+			if (takingCover) {
+				//donothing;
+				standstill.Updatea ();
+				velocity = standstill.velocity;
+			}
+			else if(disturbed) {
 				wander.Updatea();
 				velocity = wander.velocity;
 			}
 			else {
+
 				doDefaultBehaviour();
 			}
 //			}

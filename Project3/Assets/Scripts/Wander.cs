@@ -28,6 +28,7 @@ public class Wander : NPCBehaviour {
 		speedMax = 10.0f;
 		speedMaxDefault = 10.0f;
 		inArrivalRadius = false;
+		closeRayDist = closeRayDistDefault;
 		
 	}
 	

@@ -40,7 +40,7 @@ public class ReachGoal: NPCBehaviour {
 		endCoords = new Vector3 (next.x + 10.0f, 0.0f, next.z + 10.0f);
 		path = new List<Node> ();
 		inArrivalRadius = false;
-		arrivalRadius = nodeSize;
+		arrivalRadius = nodeSize*2;
 		G = new Grid(plane, goalPos, nodeSize, sniperPos);
 		G.initStart ();
 //		Node estimEndNode = new Node(false, Vector3.zero, 0, 0, Mathf.Infinity, 3.0f);
@@ -50,6 +50,7 @@ public class ReachGoal: NPCBehaviour {
 		                  null, null, G, null, false, false);
 		speedMax = 20.0f;
 		speedMaxDefault = 20.0f;
+		closeRayDist = nodeSize / 1.5f;
 //		deadPeopleSeen = new List<Vector3> ();
 	}
 

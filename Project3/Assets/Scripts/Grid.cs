@@ -75,17 +75,30 @@ public class Grid{
 				float xp = i * nodeSize + (nodeSize/2.0f) + worldNW.x;
 				float zp = -(j * nodeSize + (nodeSize/2.0f)) + worldNW.z;
 				//hidden from the sniper so small value
-				float scalar = hiddenSpaceCost;
+				//float scalar = hiddenSpaceCost;
+				float scalar = initSpaceCost;
 				float charHeight = 5.0f;
 				Vector3 nodeCenter = new Vector3(xp, charHeight, zp);
+
+				Collider[] hits = Physics.OverlapSphere(nodeCenter, nodeSize/2.0f, obstacleLayer | deadLayer | dynamicLayer);
+				int len = hits.Length;
 //				Debug.DrawLine(nodeCenter, sniperPos, Color.magenta, 100f);
 				//can see the sniper from this node, so vice versa
-				if (Physics.Raycast(nodeCenter, sniperPos - nodeCenter, out hit, Mathf.Infinity, obstacleLayer)){
-					if (hit.collider.gameObject.CompareTag("MainCamera")){
-						scalar = initSpaceCost;
+				Vector3 nodeRight = nodeCenter + Vector3.right * nodeSize/2f;
+				Vector3 nodeLeft = nodeCenter - Vector3.right * nodeSize/2f;
+				if (Physics.Raycast(nodeRight, sniperPos - nodeRight, out hit, 10.0f, obstacleLayer) && 
+				    Physics.Raycast(nodeLeft, sniperPos - nodeLeft, out hit, 10.0f, obstacleLayer)){
+					if (hit.collider.gameObject.CompareTag("Obstacle")){
+						//scalar = initSpaceCost;
+						scalar = hiddenSpaceCost;
 					}
 				}
-				spaceCostScalars[i,j] = scalar;
+				if(len == 0) {
+					spaceCostScalars[i,j] = scalar;
+				}
+				else {
+					spaceCostScalars[i,j] = 0;
+				}
 			}
 		}
 	}
@@ -120,18 +133,24 @@ public class Grid{
 				float h = Vector3.Distance(nodeCenter, goalPos);
 				int len = hits.Length;
 				if (sniperPosKnown){
-					bool free = true;
-					foreach(Collider c in hits){
-						float dist = Vector3.Distance (c.ClosestPointOnBounds(nodeCenter), nodeCenter);
-						//want to check everything in hits to see if contained in the cell
-						if(dist < nodeSize/2.0f) {
-							free = false;
-						}
+					if(len == 0) {
+//						grid[i,j] = new Node(true, nodeCenter, i, j, h, spaceCostScalars[i,j]);
+						updateNode(grid[i,j], h, true, spaceCostScalars[i,j]);
 					}
-//					spaceCostScalar = spaceCostScalars[i,j];
-//					grid[i,j] = new Node(free, nodeCenter, i, j, h, spaceCostScalars[i,j]);
-					updateNode(grid[i,j], h, free, spaceCostScalars[i,j]);
-//					Debug.Log ("sniperPosKnown");
+					else {
+						bool free = true;
+						foreach(Collider c in hits){
+							float dist = Vector3.Distance (c.ClosestPointOnBounds(nodeCenter), nodeCenter);
+							//want to check everything in hits to see if contained in the cell
+							if(dist < nodeSize/2.0f) {
+								free = false;
+							}
+						}
+	//					spaceCostScalar = spaceCostScalars[i,j];
+//						grid[i,j] = new Node(free, nodeCenter, i, j, h, spaceCostScalars[i,j]);
+						updateNode(grid[i,j], h, free, spaceCostScalars[i,j]);
+	//					Debug.Log ("sniperPosKnown");
+					}
 				}
 				else {
 					if(len == 0) {
@@ -168,7 +187,7 @@ public class Grid{
 				}
 			}
 		}
-		drawShadeLines ();
+//		drawShadeLines ();
 	}
 
 	void updateNode(Node n, float h, bool free, float spaceCost){
@@ -180,14 +199,14 @@ public class Grid{
 	}
 
 	void drawShadeLines(){
-		for (int i = 0; i < gridWidth; i++) {
+		for (int i = 0; i < gridWidth/2; i++) {
 			for (int j = 0; j < gridHeight; j ++) {
-				float sc = grid[i,j].spaceCost;
+				float sc = grid[i*2,j].spaceCost;
 //				float den = initSpaceCost;
 //				if (sniperPosKnown)
 //					den *= spaceCostScalars[i,j];
 				Color scaledGrey = Color.white * (sc/initSpaceCost);
-				Debug.DrawLine (grid[i,j].loc + Vector3.right*(nodeSize/2.0f), grid[i,j].loc - Vector3.right*(nodeSize/2.0f), scaledGrey, 2);
+				Debug.DrawLine (grid[i*2,j].loc + Vector3.right*(nodeSize/2.0f), grid[i*2,j].loc - Vector3.right*(nodeSize/2.0f), scaledGrey, 2);
 				//Debug.DrawLine (grid[i,j].loc + Vector3.forward*(nodeSize/2.0f), grid[i,j].loc - Vector3.forward*(nodeSize/2.0f), scaledGrey, 2, false);
 				
 			}
