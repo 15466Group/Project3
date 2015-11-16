@@ -26,7 +26,7 @@ public class NPCBehaviour : MonoBehaviour {
 	protected Vector3 biasDir { get; set; }
 
 	private float charWidth;
-	private float smooth;
+	protected float smooth;
 	private float obstacleWeight;
 	private float charWeight;
 	
@@ -84,7 +84,7 @@ public class NPCBehaviour : MonoBehaviour {
 		acceleration = new Vector3 (acceleration.x, 0.0f, acceleration.z).normalized * accMag;
 	}
 	
-	void RotateTo(Vector3 targetPosition){
+	protected virtual void RotateTo(Vector3 targetPosition){
 		//maxDistance is the maximum ray distance
 		Quaternion destinationRotation;
 		Vector3 relativePosition;
@@ -210,8 +210,13 @@ public class NPCBehaviour : MonoBehaviour {
 ////				transform.gameObject.layer = 8;
 //			speedMax = 0.0f; 
 //		} else { //exponential growth translated up by 10, capped at originalMaxSpeed
-////				transform.gameObject.layer = 0;
-//			speedMax = Mathf.Min (Mathf.Pow (1.1f, Vector3.Distance(transform.position, target)) + 10.0f, speedMaxDefault);
+//				transform.gameObject.layer = 0;
+		if (inArrivalRadius) {	
+			speedMax = Mathf.Min (Mathf.Pow (1.1f, Vector3.Distance (transform.position, target)) + 10.0f, speedMaxDefault);
+//			speedMax = 
+		} else {
+			speedMax = speedMaxDefault;
+		}
 //		}
 //		}
 	}

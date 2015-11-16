@@ -160,7 +160,7 @@ public class MasterScheduler : MonoBehaviour {
 					mb.disturbed = true;
 					mb.takingCover = false;
 				//reaches poi
-				} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
+				} else if (Vector3.Distance (currChar.transform.position, mb.poi) <= nodeSize) {
 //					mb.seesPlayer = false;
 					mb.seenTime = 0f;
 					mb.isGoaling = false;
@@ -179,7 +179,7 @@ public class MasterScheduler : MonoBehaviour {
 					mb.seesPlayer = false;
 				}
 			//reaches poi
-			} else if (Vector3.Distance (currChar.transform.position, mb.poi) < 10f) {
+			} else if (Vector3.Distance (currChar.transform.position, mb.poi) <= nodeSize) {
 //				mb.seesPlayer = false;
 				mb.seenTime = 0f;
 				mb.isGoaling = false;
