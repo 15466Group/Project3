@@ -10,6 +10,8 @@ public class Wander : NPCBehaviour {
 	private Vector3 tempDir;
 	protected float rotationSpeedDeg { get; set; }
 	protected float rotationSpeedDegDefault { get; set; }
+	public float minT { get; set; }
+	public float maxT { get; set; }
 	
 	// Use this for initialization
 	public override void Starta () {
@@ -43,7 +45,8 @@ public class Wander : NPCBehaviour {
 					tempT = 2*Mathf.PI - tempT;
 				}
 				//				float theta = Random.Range (0.0f, 360.0f) * Mathf.Deg2Rad;
-				float theta = Random.Range (tempT - Mathf.PI/4f, tempT + Mathf.PI/4f);
+				//float theta = Random.Range (tempT - Mathf.PI/4f, tempT + Mathf.PI/4f);
+				float theta = Random.Range (minT, maxT);
 				//				float theta = Random.Range (tempT - 0.05f, tempT + 0.05f);
 				float newX = Mathf.Cos (theta) * radius;
 				float newZ = Mathf.Sin (theta) * radius;

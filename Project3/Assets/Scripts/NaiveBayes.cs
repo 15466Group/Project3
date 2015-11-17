@@ -122,7 +122,10 @@ public class NaiveBayes : Object {
 		setLatestInputs (closestBuildOnLeft, closestBuildOnRight, sniperCanSeeLeft, sniperCanSeeRight, densityRight, densityLeft);
 		//now that we set the inputs, use them to compute probabilities 
 		calculateProbabilities ();
-		return toSearch;
+		if (toSearch == 1)
+			return toSearch;
+		else
+			return -1;
 	}
 
 	//between 0 and 360

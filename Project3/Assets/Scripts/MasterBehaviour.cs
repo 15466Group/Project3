@@ -9,6 +9,7 @@ public class MasterBehaviour : MonoBehaviour {
 	public float health { get; set; }
 	public bool seesPlayer { get; set; }
 	public Vector3 lastSeen { get; set; }
+	public Vector3 lastSeenForward { get; set; }
 	public bool seesDeadPeople { get; set; }
 	private List<Vector3> deadPeopleSeen;
 
@@ -30,6 +31,9 @@ public class MasterBehaviour : MonoBehaviour {
 	public bool isGoingToCover { get; set; }
 	public bool isGoingToSeenPlayerPos { get; set; }
 	public int ammoCount { get; set; }
+	public int wanderDir { get; set; }
+
+	public float dirSearchCountDown;
 
 	public ReachGoal reachGoal { get; set; }
 	private Wander wander;
@@ -66,6 +70,7 @@ public class MasterBehaviour : MonoBehaviour {
 		health = 100.0f;
 		seesPlayer = false;
 		lastSeen = Vector3.zero;
+		lastSeenForward = Vector3.zero;
 		seesDeadPeople = false;
 		hearsSomething = false;
 		disturbed = false;
@@ -79,6 +84,7 @@ public class MasterBehaviour : MonoBehaviour {
 		isGoaling = false;
 		isGoingToSeenPlayerPos = false;
 		isGoingToCover = false;
+		dirSearchCountDown = 0.0f;
 
 		reachGoal = GetComponent<ReachGoal> ();
 		wander = GetComponent<Wander> ();
@@ -132,12 +138,38 @@ public class MasterBehaviour : MonoBehaviour {
 //		if (!(seesPlayer || seesDeadPeople || hearsSomething)) {
 		if (!isReachingGoal()) {
 //			if (!takingCover){
-			if (takingCover) {
+			if (takingCover && dirSearchCountDown <= 0) {
 				//donothing;
 				standstill.Updatea ();
 				velocity = standstill.velocity;
 			}
 			else if(disturbed) {
+				if(wanderDir == -1 && dirSearchCountDown > 0f) {
+					float tempT = Mathf.Acos (lastSeenForward.x);
+					if(lastSeenForward.z < 0) {
+						tempT = 2*Mathf.PI - tempT;
+					}
+					wander.minT = tempT;
+					wander.maxT = tempT + (2f*Mathf.PI / 3f);
+					dirSearchCountDown -= Time.deltaTime;
+				}
+				else if(wanderDir == 1 && dirSearchCountDown > 0f) {
+					float tempT = Mathf.Acos (lastSeenForward.x);
+					if(lastSeenForward.z < 0) {
+						tempT = 2*Mathf.PI - tempT;
+					}
+					wander.maxT = tempT;
+					wander.minT = tempT - (2f*Mathf.PI / 3f);
+					dirSearchCountDown -= Time.deltaTime;
+				}
+				else {
+					float tempT = Mathf.Acos (transform.forward.normalized.x);
+					if(transform.forward.z < 0) {
+						tempT = 2*Mathf.PI - tempT;
+					}
+					wander.minT = tempT - Mathf.PI/4f;
+					wander.maxT = tempT + Mathf.PI/4f;
+				}
 				wander.Updatea();
 				velocity = wander.velocity;
 			}

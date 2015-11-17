@@ -128,10 +128,13 @@ public class MasterScheduler : MonoBehaviour {
 	}
 
 	void updateSniperInfoForChar(GameObject currChar, MasterBehaviour mb){
+		if (mb.dirSearchCountDown > 0)
+			return;
 		if (mb.knowsOfSniper ()) {
 			if (!mb.seesPlayer)
 				mb.takingCover = true;
 			if (!mb.isGoingToSeenPlayerPos && !mb.reachedCover) {
+				//going to cover
 				mb.poi = mb.takeCover.coverPoint (currChar.transform.position);
 				mb.isGoaling = true;
 				mb.isGoingToCover = true;
@@ -139,6 +142,7 @@ public class MasterScheduler : MonoBehaviour {
 				mb.coverSpot = mb.poi;
 			}
 			if (Vector3.Distance (mb.coverSpot, currChar.transform.position) <= nodeSize && !mb.seesPlayer){
+				//reached cover, not seeing player
 				mb.reachedCover = true;
 				mb.isGoingToCover = false;
 //				Debug.Log(mb.gameObject.name + " reached cover");
@@ -163,6 +167,7 @@ public class MasterScheduler : MonoBehaviour {
 					currChar.GetComponents <AudioSource> () [1].Play ();
 				}
 				mb.lastSeen = player.transform.position;
+				mb.lastSeenForward = player.transform.forward;
 				mb.needsToRaiseAlertLevel = true;
 				mb.seesPlayer = true;
 				mb.seenTime += Time.deltaTime;
@@ -177,17 +182,27 @@ public class MasterScheduler : MonoBehaviour {
 				mb.disturbed = true;
 				mb.takingCover = false;
 			} else {
+				if(mb.seesPlayer) {
+					Debug.Log ("EXTENDING");
+					mb.poi = player.transform.position + player.transform.forward * 20f;
+				}
 				mb.seesPlayer = false;
 			}
 		} else {
+			if(mb.seesPlayer) {
+				Debug.Log ("EXTENDING");
+				mb.poi = player.transform.position + player.transform.forward * 20f;
+			}
 			mb.seesPlayer = false;
 		}
+
 
 		//reached the poi of where he last saw the player
 		if (Vector3.Distance (mb.poi, currChar.transform.position) <= nodeSize && mb.isGoingToSeenPlayerPos) {
 			mb.isGoingToSeenPlayerPos = false;
 			mb.isGoaling = false;
 			guessDirection(mb);
+			mb.dirSearchCountDown = 3.0f;
 		} 
 
 
@@ -233,7 +248,7 @@ public class MasterScheduler : MonoBehaviour {
 		Debug.Log ("time to guess dir");
 //		mb.seesPlayer = false;
 		mb.seenTime = 0f;
-		int toSearch = NB.pointsToSearch(player.transform.forward, mb.lastSeen, mb.reachGoal.state.sGrid.grid);
+		mb.wanderDir = NB.pointsToSearch (mb.lastSeenForward, mb.lastSeen, mb.reachGoal.state.sGrid.grid);
 //		mb.seesDeadPeople = false;
 //		mb.hearsSomething = false;
 //		mb.health = 100.0f;
