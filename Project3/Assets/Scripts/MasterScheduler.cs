@@ -24,6 +24,11 @@ public class MasterScheduler : MonoBehaviour {
 	private float seenTime;
 	private float shootDistance;
 	private float sightDist;
+	
+	private NaiveBayes NB;
+	private int numSeesPlayer;
+	private int numSearchingForPlayer;
+	private float maxDist;
 
 	// Use this for initialization
 	void Start () {
@@ -44,6 +49,12 @@ public class MasterScheduler : MonoBehaviour {
 
 		shootDistance = 10f;
 		sightDist = 100.0f;
+
+		numSeesPlayer = 0;
+		numSearchingForPlayer = 0;
+		maxDist = 100f;
+		NB = new NaiveBayes (behaviourScripts [0].reachGoal.state.sGrid.hiddenSpaceCost, maxDist);
+		NB.Starta ();
 	
 	}
 	
@@ -120,17 +131,20 @@ public class MasterScheduler : MonoBehaviour {
 		if (mb.knowsOfSniper ()) {
 			if (!mb.seesPlayer)
 				mb.takingCover = true;
-			if (!mb.isGoaling && !mb.reachedCover) {
+			if (!mb.isGoingToSeenPlayerPos && !mb.reachedCover) {
 				mb.poi = mb.takeCover.coverPoint (currChar.transform.position);
 				mb.isGoaling = true;
+				mb.isGoingToCover = true;
+				mb.isGoingToSeenPlayerPos = false;
 				mb.coverSpot = mb.poi;
 			}
 			if (Vector3.Distance (mb.coverSpot, currChar.transform.position) <= nodeSize && !mb.seesPlayer){
 				mb.reachedCover = true;
-				Debug.Log(mb.gameObject.name + " reached cover");
+				mb.isGoingToCover = false;
+//				Debug.Log(mb.gameObject.name + " reached cover");
 				mb.isGoaling = false;
 			} else {
-				Debug.Log (mb.gameObject.name + " not reached cover");
+//				Debug.Log (mb.gameObject.name + " not reached cover");
 				mb.reachedCover = false;
 			}
 		} else {
@@ -142,53 +156,87 @@ public class MasterScheduler : MonoBehaviour {
 		RaycastHit hit;
 		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward + currChar.transform.right).normalized * sightDist, Color.red);
 		Debug.DrawRay (currChar.transform.position, (Mathf.Sqrt (3) * currChar.transform.forward - currChar.transform.right).normalized * sightDist, Color.red);
-		if (Vector3.Angle (currChar.transform.forward, player.transform.position - currChar.transform.position) <= playerAngle) {
-			if (Physics.Raycast (currChar.transform.position, player.transform.position - currChar.transform.position, out hit, sightDist)) {
-				if (hit.collider.gameObject == player) {
-					if(!mb.seesPlayer) {
-						currChar.GetComponents <AudioSource> ()[1].Play ();
-					}
-					mb.needsToRaiseAlertLevel = true;
-					mb.seesPlayer = true;
-					mb.seenTime += Time.deltaTime;
-					if(mb.seenTime > 2f) {
-						mb.isShooting = true;
-						mb.seenTime = 0f;
-					}
-					mb.poi = player.transform.position;
-					mb.isGoaling = true;
-					mb.disturbed = true;
-					mb.takingCover = false;
-				//reaches poi
-				} else if (Vector3.Distance (currChar.transform.position, mb.poi) <= nodeSize) {
-//					mb.seesPlayer = false;
-					mb.seenTime = 0f;
-					mb.isGoaling = false;
-//					mb.seesDeadPeople = false;
-//					mb.hearsSomething = false;
-//					mb.health = 100.0f;
-				} else {
-					if(mb.seesPlayer) {
-						//saw the character turn some direction, so search in that direction even though does not
-						//see player anymore
-						mb.poi = player.transform.position + player.transform.forward * 10f;
-						Debug.Log ("extending");
-						mb.isGoaling = true;
-						mb.takingCover = false;
-					}
-					mb.seesPlayer = false;
+		if (Physics.Raycast (currChar.transform.position, player.transform.position - currChar.transform.position, out hit, sightDist)) {
+			float angle = Vector3.Angle (currChar.transform.forward, player.transform.position - currChar.transform.position);
+			if ((hit.collider.gameObject == player) && (angle <= playerAngle)) {
+				if (!mb.seesPlayer) {
+					currChar.GetComponents <AudioSource> () [1].Play ();
 				}
-			//reaches poi
-			} else if (Vector3.Distance (currChar.transform.position, mb.poi) <= nodeSize) {
-//				mb.seesPlayer = false;
-				mb.seenTime = 0f;
-				mb.isGoaling = false;
-//				mb.seesDeadPeople = false;
-//				mb.hearsSomething = false;
-//				mb.health = 100.0f;
+				mb.lastSeen = player.transform.position;
+				mb.needsToRaiseAlertLevel = true;
+				mb.seesPlayer = true;
+				mb.seenTime += Time.deltaTime;
+				if (mb.seenTime > 2f) {
+					mb.isShooting = true;
+					mb.seenTime = 0f;
+				}
+				mb.poi = player.transform.position;
+				mb.isGoaling = true;
+				mb.isGoingToSeenPlayerPos = true;
+				mb.isGoingToCover = false;
+				mb.disturbed = true;
+				mb.takingCover = false;
 			} else {
+				mb.seesPlayer = false;
 			}
+		} else {
+			mb.seesPlayer = false;
 		}
+
+		//reached the poi of where he last saw the player
+		if (Vector3.Distance (mb.poi, currChar.transform.position) <= nodeSize && mb.isGoingToSeenPlayerPos) {
+			mb.isGoingToSeenPlayerPos = false;
+			mb.isGoaling = false;
+			guessDirection(mb);
+		} 
+
+
+//		if (Vector3.Angle (currChar.transform.forward, player.transform.position - currChar.transform.position) <= playerAngle) {
+//			if (Physics.Raycast (currChar.transform.position, player.transform.position - currChar.transform.position, out hit, sightDist)) {
+//				if (hit.collider.gameObject == player) {
+//					if(!mb.seesPlayer) {
+//						currChar.GetComponents <AudioSource> ()[1].Play ();
+//					}
+//					mb.lastSeen = player.transform.position;
+//					mb.needsToRaiseAlertLevel = true;
+//					mb.seesPlayer = true;
+//					mb.seenTime += Time.deltaTime;
+//					if(mb.seenTime > 2f) {
+//						mb.isShooting = true;
+//						mb.seenTime = 0f;
+//					}
+//					mb.poi = player.transform.position;
+//					mb.isGoaling = true;
+//					mb.disturbed = true;
+//					mb.takingCover = false;
+//				//reaches poi
+//				} else if (Vector3.Distance (currChar.transform.position, mb.poi) <= nodeSize) {
+//					guessDirection(mb);
+//				} else {
+//					if(mb.seesPlayer) { //use naive bayes to determine where the character should search next
+//						Debug.Log ("extending");
+//						mb.poi = player.transform.position + player.transform.forward * 10f;
+//						mb.isGoaling = true;
+//						mb.takingCover = false;
+//					}
+//					mb.seesPlayer = false;
+//				}
+//			//reaches poi
+//			} else if (Vector3.Distance (currChar.transform.position, mb.poi) <= nodeSize) {
+//				guessDirection(mb);
+//			} else {
+//			}
+//		}
+	}
+
+	void guessDirection(MasterBehaviour mb){
+		Debug.Log ("time to guess dir");
+//		mb.seesPlayer = false;
+		mb.seenTime = 0f;
+		int toSearch = NB.pointsToSearch(player.transform.forward, mb.lastSeen, mb.reachGoal.state.sGrid.grid);
+//		mb.seesDeadPeople = false;
+//		mb.hearsSomething = false;
+//		mb.health = 100.0f;
 	}
 
 

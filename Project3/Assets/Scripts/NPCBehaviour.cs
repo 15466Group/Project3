@@ -213,7 +213,8 @@ public class NPCBehaviour : MonoBehaviour {
 //				transform.gameObject.layer = 0;
 		if (inArrivalRadius) {	
 			speedMax = Mathf.Min (Mathf.Pow (1.1f, Vector3.Distance (transform.position, target)) + 10.0f, speedMaxDefault);
-//			speedMax = 
+//			speedMax = 1f;
+			Debug.Log ("in arrival rad");
 		} else {
 			speedMax = speedMaxDefault;
 		}

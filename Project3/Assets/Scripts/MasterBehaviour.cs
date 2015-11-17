@@ -8,6 +8,7 @@ public class MasterBehaviour : MonoBehaviour {
 	public Vector3 poi { get; set; }  //point of interest that he reaches goal on
 	public float health { get; set; }
 	public bool seesPlayer { get; set; }
+	public Vector3 lastSeen { get; set; }
 	public bool seesDeadPeople { get; set; }
 	private List<Vector3> deadPeopleSeen;
 
@@ -26,6 +27,8 @@ public class MasterBehaviour : MonoBehaviour {
 	public bool reachedCover { get; set; }
 	public bool isReloading { get; set; }
 	public bool isGoaling { get; set; }
+	public bool isGoingToCover { get; set; }
+	public bool isGoingToSeenPlayerPos { get; set; }
 	public int ammoCount { get; set; }
 
 	public ReachGoal reachGoal { get; set; }
@@ -62,6 +65,7 @@ public class MasterBehaviour : MonoBehaviour {
 		poi = Vector3.zero;
 		health = 100.0f;
 		seesPlayer = false;
+		lastSeen = Vector3.zero;
 		seesDeadPeople = false;
 		hearsSomething = false;
 		disturbed = false;
@@ -73,6 +77,8 @@ public class MasterBehaviour : MonoBehaviour {
 		sniperPosKnown = false;
 		sniperPos = sP;
 		isGoaling = false;
+		isGoingToSeenPlayerPos = false;
+		isGoingToCover = false;
 
 		reachGoal = GetComponent<ReachGoal> ();
 		wander = GetComponent<Wander> ();
@@ -156,7 +162,7 @@ public class MasterBehaviour : MonoBehaviour {
 			standstill.Updatea ();
 			velocity = standstill.velocity;
 		} else if (string.Compare("Patrol", defaultBehaviour) == 0) {
-			Debug.Log (transform.gameObject.name + ": defaulting");
+//			Debug.Log (transform.gameObject.name + ": defaulting");
 			patrol.Updatea ();
 			velocity = patrol.velocity;
 		} else {
@@ -169,7 +175,7 @@ public class MasterBehaviour : MonoBehaviour {
 	public bool isReachingGoal(){
 		//		return (seesPlayer || seesDeadPeople || hearsSomething) && !isDead;
 		//		return (seesPlayer || hearsSomething) && !isDead;
-		return isGoaling && !isDead;
+		return ((isGoingToCover || isGoingToSeenPlayerPos) && !isDead);
 	}
 
 	public void getHit(int damage) {
