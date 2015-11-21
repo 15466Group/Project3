@@ -26,9 +26,9 @@ public class MasterScheduler : MonoBehaviour {
 	private float sightDist;
 	
 	private NaiveBayes NB;
-	private int numSeesPlayer;
-	private int numSearchingForPlayer;
+	private List<MasterBehaviour> currentlySearching;
 	private float maxDist;
+
 
 	// Use this for initialization
 	void Start () {
@@ -50,12 +50,15 @@ public class MasterScheduler : MonoBehaviour {
 		shootDistance = 10f;
 		sightDist = 100.0f;
 
-		numSeesPlayer = 0;
-		numSearchingForPlayer = 0;
 		maxDist = 100f;
 		NB = new NaiveBayes (behaviourScripts [0].reachGoal.state.sGrid.hiddenSpaceCost, maxDist);
 		NB.Starta ();
-	
+		currentlySearching = new List<MasterBehaviour> ();
+
+	}
+
+	void Awake(){
+		DontDestroyOnLoad (NB); //want to save probabilities for each scene
 	}
 	
 	// Update is called once per frame
@@ -125,6 +128,27 @@ public class MasterScheduler : MonoBehaviour {
 //		Debug.Log ("isGoaling1: " + mb.isGoaling);
 		updatePlayerInfoForChar (currChar, mb, playerAngle);
 //		Debug.Log ("isGoaling2: " + mb.isGoaling);
+		updateSearchingStatus ();
+	}
+
+	void updateSearchingStatus(){
+		int len = currentlySearching.Count;
+		if (len > 0) {
+			List<int> toRemove = new List<int> ();
+			for (int i = 0; i < len; i++) {
+				//done searching and have a failure, remove him from this searching list
+				if (currentlySearching [i].dirSearchCountDown <= 0f) {
+					toRemove.Add (i);
+				}
+			}
+			foreach (int j in toRemove) {
+				currentlySearching.RemoveAt (j);
+			}
+			if (currentlySearching.Count <= 0) {
+				//no one is searching anymore so player escaped so update with failure
+				NB.updateInputs (false, Vector3.zero);
+			}
+		}
 	}
 
 	void updateSniperInfoForChar(GameObject currChar, MasterBehaviour mb){
@@ -181,78 +205,65 @@ public class MasterScheduler : MonoBehaviour {
 				mb.isGoingToCover = false;
 				mb.disturbed = true;
 				mb.takingCover = false;
+				makeEveryoneStopSearching(mb.lastSeen);
 			} else {
 				if(mb.seesPlayer) {
-					Debug.Log ("EXTENDING");
-					mb.poi = player.transform.position + player.transform.forward * 20f;
+					extendSearchInForwardDir(mb);
 				}
 				mb.seesPlayer = false;
 			}
 		} else {
 			if(mb.seesPlayer) {
-				Debug.Log ("EXTENDING");
-				mb.poi = player.transform.position + player.transform.forward * 20f;
+				extendSearchInForwardDir(mb);
 			}
 			mb.seesPlayer = false;
 		}
 
-
 		//reached the poi of where he last saw the player
-		if (Vector3.Distance (mb.poi, currChar.transform.position) <= nodeSize && mb.isGoingToSeenPlayerPos) {
-			mb.isGoingToSeenPlayerPos = false;
-			mb.isGoaling = false;
+		if (Vector3.Distance (mb.poi, currChar.transform.position) <= nodeSize && mb.isGoingToSeenPlayerPos && !mb.seesPlayer) {
+			Debug.Log (currChar.gameObject.name + " is guessing direction");
+			Debug.Break();
 			guessDirection(mb);
-			mb.dirSearchCountDown = 3.0f;
 		} 
+	}
 
-
-//		if (Vector3.Angle (currChar.transform.forward, player.transform.position - currChar.transform.position) <= playerAngle) {
-//			if (Physics.Raycast (currChar.transform.position, player.transform.position - currChar.transform.position, out hit, sightDist)) {
-//				if (hit.collider.gameObject == player) {
-//					if(!mb.seesPlayer) {
-//						currChar.GetComponents <AudioSource> ()[1].Play ();
-//					}
-//					mb.lastSeen = player.transform.position;
-//					mb.needsToRaiseAlertLevel = true;
-//					mb.seesPlayer = true;
-//					mb.seenTime += Time.deltaTime;
-//					if(mb.seenTime > 2f) {
-//						mb.isShooting = true;
-//						mb.seenTime = 0f;
-//					}
-//					mb.poi = player.transform.position;
-//					mb.isGoaling = true;
-//					mb.disturbed = true;
-//					mb.takingCover = false;
-//				//reaches poi
-//				} else if (Vector3.Distance (currChar.transform.position, mb.poi) <= nodeSize) {
-//					guessDirection(mb);
-//				} else {
-//					if(mb.seesPlayer) { //use naive bayes to determine where the character should search next
-//						Debug.Log ("extending");
-//						mb.poi = player.transform.position + player.transform.forward * 10f;
-//						mb.isGoaling = true;
-//						mb.takingCover = false;
-//					}
-//					mb.seesPlayer = false;
-//				}
-//			//reaches poi
-//			} else if (Vector3.Distance (currChar.transform.position, mb.poi) <= nodeSize) {
-//				guessDirection(mb);
-//			} else {
-//			}
-//		}
+	void extendSearchInForwardDir(MasterBehaviour mb){
+		Vector3 gridCoords = mb.reachGoal.state.sGrid.getGridCoords(player.transform.position + player.transform.forward * 20f);
+		Node potentialNode = mb.reachGoal.state.sGrid.grid[(int)gridCoords.x, (int)gridCoords.z];
+		if (potentialNode.free)
+			mb.poi = potentialNode.loc;
 	}
 
 	void guessDirection(MasterBehaviour mb){
-		Debug.Log ("time to guess dir");
-//		mb.seesPlayer = false;
+		mb.isGoingToSeenPlayerPos = false;
+		mb.isGoaling = false;
 		mb.seenTime = 0f;
 		mb.wanderDir = NB.pointsToSearch (mb.lastSeenForward, mb.lastSeen, mb.reachGoal.state.sGrid.grid);
-//		mb.seesDeadPeople = false;
-//		mb.hearsSomething = false;
-//		mb.health = 100.0f;
+		mb.dirSearchCountDown = 6.0f;
+		currentlySearching.Add (mb);
 	}
+
+	void makeEveryoneStopSearching(Vector3 playerPos){
+		//someone has seen the player so stop searching everyone!
+		if (currentlySearching.Count > 0) {
+			Debug.Log ("stop searching everyone!");
+			foreach (MasterBehaviour mb in currentlySearching) {
+				mb.dirSearchCountDown = 0f;
+			}
+			Debug.Log ("currSearching length before: " + currentlySearching.Count);
+			currentlySearching.Clear ();
+			Debug.Log ("currSearching length after: " + currentlySearching.Count);
+			NB.updateInputs (true, playerPos);
+		}
+	}
+
+
+
+
+
+
+
+
 
 
 

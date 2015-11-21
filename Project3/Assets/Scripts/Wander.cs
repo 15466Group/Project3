@@ -30,16 +30,22 @@ public class Wander : NPCBehaviour {
 		speedMax = 10.0f;
 		speedMaxDefault = 10.0f;
 		inArrivalRadius = false;
-		closeRayDist = closeRayDistDefault;
+//		closeRayDistDefault = 0f;
+//		closeRayDist = closeRayDistDefault;
+//		rayDistDefault = 0f;
+//		rayDist = rayDistDefault;
+		acceleration = transform.forward.normalized * accMag;
 		
 	}
 	
 	// Update is called once per frame
 	public override void Updatea () {
 		//choosing a new position to accelerate towards
-		if (biasDir == Vector3.zero) {
+		if (biasDir == Vector3.zero || true) {
 			//the character is not being affected by any obstacle
 			if (Vector3.Angle (tempDir.normalized, targetDir.normalized) < 2.0f) {
+				tempDir = transform.forward.normalized * accMag;
+				Debug.DrawRay(transform.position, tempDir, Color.black);
 				float tempT = Mathf.Acos (transform.forward.normalized.x);
 				if(transform.forward.z < 0) {
 					tempT = 2*Mathf.PI - tempT;
@@ -60,6 +66,9 @@ public class Wander : NPCBehaviour {
 			if (Vector3.Angle (targetDir, biasDir) > 90.0f) {
 				targetDir = biasDir;
 			}
+			Debug.DrawRay (transform.position, targetDir * 200f, Color.cyan, 5f);
+			Debug.Log ("biasDir not zero");
+//			Debug.Break ();
 		}
 		
 		

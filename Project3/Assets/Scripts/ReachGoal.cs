@@ -33,6 +33,12 @@ public class ReachGoal: NPCBehaviour {
 		acceleration = base.calculateAcceleration (target);
 		isWanderer = false;
 		isReachingGoal = true;
+		rayDistDefault = 10.0f;
+		rayDist = rayDistDefault;
+		closeRayDistDefault = 3.5f;
+		closeRayDist = closeRayDistDefault;
+		speedMaxDefault = 20.0f;
+		speedMax = speedMaxDefault;
 		hitNextNode = true;
 		next = transform.position;
 		nextCoords = next;
@@ -48,8 +54,6 @@ public class ReachGoal: NPCBehaviour {
 //		List<Node> estimPath = new List<Node> ();
 		state = new State (new List<Node> (), new List<Node> (), new Dictionary<Node, Node> (),
 		                  null, null, G, null, false, false);
-		speedMax = 20.0f;
-		speedMaxDefault = 20.0f;
 		closeRayDist = nodeSize / 1.5f;
 //		deadPeopleSeen = new List<Vector3> ();
 	}

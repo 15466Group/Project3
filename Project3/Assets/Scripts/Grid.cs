@@ -251,11 +251,11 @@ public class Grid{
 
 		if (i < 0)
 			i = 0;
-		if (i > gridWidth)
+		if (i >= gridWidth)
 			i = gridWidth - 1;
 		if (j < 0)
 			j = 0;
-		if (j > gridHeight)
+		if (j >= gridHeight)
 			j = gridHeight - 1;
 
 		return new Vector3(i, 0.0f, j);

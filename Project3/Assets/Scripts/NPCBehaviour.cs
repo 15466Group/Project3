@@ -10,7 +10,7 @@ public class NPCBehaviour : MonoBehaviour {
 	//private Animation anim;
 	public Vector3 velocity { get; set; }
 	public Vector3 acceleration { get; set; }
-	protected float accMag { get; set; }
+	public float accMag { get; set; }
 	protected float accMagDefault { get; set; }
 	protected float speedMaxDefault { get; set; }
 	protected float speedMax { get; set; }
@@ -82,6 +82,8 @@ public class NPCBehaviour : MonoBehaviour {
 	protected virtual void doAcceleration(){
 		acceleration = calculateAcceleration (target);
 		acceleration = new Vector3 (acceleration.x, 0.0f, acceleration.z).normalized * accMag;
+		if (isWanderer)
+			Debug.DrawRay (transform.position, acceleration, Color.cyan);
 	}
 	
 	protected virtual void RotateTo(Vector3 targetPosition){
@@ -104,14 +106,14 @@ public class NPCBehaviour : MonoBehaviour {
 	
 	//even if something isn't directly in front of the character, should still avoid it if it's too close
 	//cus he cant turn instantaneously
-	Vector3 checkCloseCalls(Vector3 acceleration) {
+	Vector3 checkCloseCalls(Vector3 accel) {
 		Collider[] hits = Physics.OverlapSphere (transform.position, closeRayDist);
 		//don't include hitting self
 		if (hits.Length > 1) {
-			Vector3 accumulator = obstacleAvoidance(rayDist, hits);
+			Vector3 accumulator = obstacleAvoidance(closeRayDist, hits);
 			return accumulator.normalized * accMag;
 		} else {
-			return acceleration;
+			return accel;
 		}
 	}
 	
@@ -214,7 +216,7 @@ public class NPCBehaviour : MonoBehaviour {
 		if (inArrivalRadius) {	
 			speedMax = Mathf.Min (Mathf.Pow (1.1f, Vector3.Distance (transform.position, target)) + 10.0f, speedMaxDefault);
 //			speedMax = 1f;
-			Debug.Log ("in arrival rad");
+//			Debug.Log ("in arrival rad");
 		} else {
 			speedMax = speedMaxDefault;
 		}

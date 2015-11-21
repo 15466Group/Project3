@@ -33,7 +33,7 @@ public class MasterBehaviour : MonoBehaviour {
 	public int ammoCount { get; set; }
 	public int wanderDir { get; set; }
 
-	public float dirSearchCountDown;
+	public float dirSearchCountDown { get; set; }
 
 	public ReachGoal reachGoal { get; set; }
 	private Wander wander;
@@ -114,6 +114,7 @@ public class MasterBehaviour : MonoBehaviour {
 		maxAlertLevel = 3;
 		needsToRaiseAlertLevel = false;
 		isReloading = false;
+		isShooting = false;
 		ammoCount = 0;
 //		Debug.Log (transform.name);
 	}
@@ -132,7 +133,7 @@ public class MasterBehaviour : MonoBehaviour {
 			return;
 		}
 		//and if the character is facing the character
-		if (isShooting && !gunShot.isPlaying && !gc.isDead && !isReloading) {
+		if (isShooting && !gunShot.isPlaying && !gc.isDead && !isReloading && seesPlayer) {
 			shoot ();
 		}
 //		if (!(seesPlayer || seesDeadPeople || hearsSomething)) {
@@ -174,7 +175,6 @@ public class MasterBehaviour : MonoBehaviour {
 				velocity = wander.velocity;
 			}
 			else {
-
 				doDefaultBehaviour();
 			}
 //			}
