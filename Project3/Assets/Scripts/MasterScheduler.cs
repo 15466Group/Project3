@@ -33,7 +33,7 @@ public class MasterScheduler : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		numChars = characters.transform.childCount;
-		Debug.Log (numChars);
+//		Debug.Log (numChars);
 		behaviourScripts = new MasterBehaviour[numChars];
 		
 		for (int i = 0; i < numChars; i++) {
@@ -123,11 +123,8 @@ public class MasterScheduler : MonoBehaviour {
 			playerAngle = 360.0f;
 		else
 			playerAngle = 30.0f + (10.0f * mb.alertLevel);
-//		Debug.Log ("isGoaling0: " + mb.isGoaling);
 		updateSniperInfoForChar (currChar, mb);
-//		Debug.Log ("isGoaling1: " + mb.isGoaling);
 		updatePlayerInfoForChar (currChar, mb, playerAngle);
-//		Debug.Log ("isGoaling2: " + mb.isGoaling);
 		updateSearchingStatus ();
 	}
 
@@ -221,8 +218,6 @@ public class MasterScheduler : MonoBehaviour {
 
 		//reached the poi of where he last saw the player
 		if (Vector3.Distance (mb.poi, currChar.transform.position) <= nodeSize && mb.isGoingToSeenPlayerPos && !mb.seesPlayer) {
-			Debug.Log (currChar.gameObject.name + " is guessing direction");
-			Debug.Break();
 			guessDirection(mb);
 		} 
 	}
@@ -246,13 +241,11 @@ public class MasterScheduler : MonoBehaviour {
 	void makeEveryoneStopSearching(Vector3 playerPos){
 		//someone has seen the player so stop searching everyone!
 		if (currentlySearching.Count > 0) {
-			Debug.Log ("stop searching everyone!");
+//			Debug.Log ("stop searching everyone!");
 			foreach (MasterBehaviour mb in currentlySearching) {
 				mb.dirSearchCountDown = 0f;
 			}
-			Debug.Log ("currSearching length before: " + currentlySearching.Count);
 			currentlySearching.Clear ();
-			Debug.Log ("currSearching length after: " + currentlySearching.Count);
 			NB.updateInputs (true, playerPos);
 		}
 	}
@@ -290,7 +283,8 @@ public class MasterScheduler : MonoBehaviour {
 				MasterBehaviour mb = behaviourScripts [i];
 				if (!mb.isDead) {
 					mb.updateDeadSet (seenDeadSet);
-//					mb.updateSniperPos();
+					//fixme
+					mb.updateSniperPos();
 					mb.needsToRaiseAlertLevel = true;
 					//should stop and stare for a few frames
 				}
@@ -321,7 +315,6 @@ public class MasterScheduler : MonoBehaviour {
 						seenDeadSet.Add(deadPos);
 						wasRemoved.Add(i);
 						updatedSeen += 1;
-						Debug.Log ("dead ones seen: " + seenDeadSet.Count);
 						//he's seen a dead patrol man so he starts going to hide, and while hes going he tells others to hide
 						//this takes a while
 					}

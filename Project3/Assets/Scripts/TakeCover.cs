@@ -9,15 +9,13 @@ public class TakeCover {
 
 	private int numRows;
 	private int numCols;
-	private float nodeSize;
 	private float hiddenSpaceCost;
 	private Node[,] nodes;
 	private float[,] spaceCosts;
 
-	public TakeCover(float nS, float hSPC, Node[,] n, float[,] sC){
+	public TakeCover(float hSPC, Node[,] n, float[,] sC){
 		nodes = n;
 		spaceCosts = sC;
-		nodeSize = nS;
 		hiddenSpaceCost = hSPC;
 		numRows = nodes.GetLength (0);
 		numCols = nodes.GetLength (1);
@@ -28,6 +26,8 @@ public class TakeCover {
 	}
 
 	//searches through his grid and finds a node that provides cover from the sniper
+	//does not do a graph search, does it purely based on euclidean distance, so some characters may have a hard time getting
+	//to cover but that's ok
 	private Vector3 findClosestNode(Vector3 playerPos){
 		float minDist = Mathf.Infinity;
 		Vector3 best = playerPos;
@@ -36,10 +36,6 @@ public class TakeCover {
 				Node node = nodes[i,j];
 				if (node.free && spaceCosts[i,j] == hiddenSpaceCost){
 					float distance = Vector3.Distance(playerPos, node.loc);
-//					if (distance <= nodeSize){
-////						Debug.Log ("found one");
-//						return node.loc;
-//					} 
 					if (distance < minDist){
 						minDist = distance;
 						best = node.loc;
@@ -47,7 +43,6 @@ public class TakeCover {
 				}
 			}
 		}
-//		Debug.Log ("finally found one");
 		return best;
 	}
 

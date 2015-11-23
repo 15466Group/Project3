@@ -130,10 +130,10 @@ public class NaiveBayes : Object {
 		//now that we set the inputs, use them to compute probabilities 
 		calculateProbabilities ();
 		if (toSearch == 1) { //search right
-			Debug.Log ("Guess is right"); 
+//			Debug.Log ("Guess is right"); 
 			return toSearch;
 		} else { //search left
-			Debug.Log ("Guess is left"); 
+//			Debug.Log ("Guess is left"); 
 			return -1;
 		}
 	}
@@ -149,7 +149,7 @@ public class NaiveBayes : Object {
 	void calculateProbabilities(){
 		float toRightProb = calculateInputProb (1) * getDirProbability(true);
 		float notToRightProb = calculateInputProb (0) * getDirProbability(false);
-		Debug.Log ("toRightProb: " + toRightProb + " notToRightProb: " + notToRightProb);
+//		Debug.Log ("toRightProb: " + toRightProb + " notToRightProb: " + notToRightProb);
 		if (toRightProb > notToRightProb)
 			toSearch = 1;
 		else
@@ -196,21 +196,21 @@ public class NaiveBayes : Object {
 	//if foundplayer, then using the values set by a character rMoreDense, rMoreVisible, rHasClosestBuild,
 	//and toSearch, update rightCount, notRightCount and rmd, rmv, rhb, the inputs
 	public void updateInputs(bool foundPlayer, Vector3 playerPos){
-		if (foundPlayer) {
-			Debug.Log ("FOUND PLAYER");
-		} else {
-			Debug.Log ("DIDN'T FIND PLAYER");
-		}
+//		if (foundPlayer) {
+//			Debug.Log ("FOUND PLAYER");
+//		} else {
+//			Debug.Log ("DIDN'T FIND PLAYER");
+//		}
 		int index;
 		if (foundPlayer) {
 			//check where player actually is with respect to the forward direction, forwardDir
 			float angleBtwn = calcAngleBtwn (playerPos, lastSeen);
 			if (isLeft(angleBtwn)) { //left
-				Debug.Log ("notRightCount++");
+//				Debug.Log ("notRightCount++");
 				notRightCount++;
 				index = 0;
 			} else if (isRight (angleBtwn)) {
-				Debug.Log ("rightCount++");
+//				Debug.Log ("rightCount++");
 				rightCount++;
 				index = 1;
 			} else {
@@ -226,21 +226,21 @@ public class NaiveBayes : Object {
 	}
 
 	void printEverything(){
-		Debug.Log ("rightCount: " + rightCount + " notRightCount: " + notRightCount);
-
-		Debug.Log ("rMoreDense: " + rMoreDense);
-		Debug.Log ("rmd[notRight]: " + rmd [0].printEverything());
-		Debug.Log ("rmd[right]: " + rmd [1].printEverything());
-
-		Debug.Log ("rMoreVisible: " + rMoreVisible);
-		Debug.Log ("rmv[notRight]: " + rmv [0].printEverything());
-		Debug.Log ("rmv[right]: " + rmv [1].printEverything());
-
-		Debug.Log ("rHasClosestBuild: " + rHasClosestBuild);
-		Debug.Log ("rhb[notRight]: " + rhb [0].printEverything());
-		Debug.Log ("rhb[right]: " + rhb [1].printEverything());
-
-		Debug.Break ();
+//		Debug.Log ("rightCount: " + rightCount + " notRightCount: " + notRightCount);
+//
+//		Debug.Log ("rMoreDense: " + rMoreDense);
+//		Debug.Log ("rmd[notRight]: " + rmd [0].printEverything());
+//		Debug.Log ("rmd[right]: " + rmd [1].printEverything());
+//
+//		Debug.Log ("rMoreVisible: " + rMoreVisible);
+//		Debug.Log ("rmv[notRight]: " + rmv [0].printEverything());
+//		Debug.Log ("rmv[right]: " + rmv [1].printEverything());
+//
+//		Debug.Log ("rHasClosestBuild: " + rHasClosestBuild);
+//		Debug.Log ("rhb[notRight]: " + rhb [0].printEverything());
+//		Debug.Log ("rhb[right]: " + rhb [1].printEverything());
+//
+//		Debug.Break ();
 	}
 
 	int incrOther(){
@@ -249,11 +249,11 @@ public class NaiveBayes : Object {
 		if (toSearch == 1){
 			index = 0;
 			notRightCount++;
-			Debug.Log ("notRightCount++");
+//			Debug.Log ("notRightCount++");
 		} else {
 			index = 1;
 			rightCount++;
-			Debug.Log ("rightCount++");
+//			Debug.Log ("rightCount++");
 		}
 		return index;
 	}

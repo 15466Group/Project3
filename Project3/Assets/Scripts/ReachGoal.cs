@@ -33,9 +33,9 @@ public class ReachGoal: NPCBehaviour {
 		acceleration = base.calculateAcceleration (target);
 		isWanderer = false;
 		isReachingGoal = true;
-		rayDistDefault = 10.0f;
+		rayDistDefault = 12.0f;
 		rayDist = rayDistDefault;
-		closeRayDistDefault = 3.5f;
+		closeRayDistDefault = 5.0f;
 		closeRayDist = closeRayDistDefault;
 		speedMaxDefault = 20.0f;
 		speedMax = speedMaxDefault;

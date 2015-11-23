@@ -100,7 +100,7 @@ public class MasterBehaviour : MonoBehaviour {
 		wander.Starta ();
 		patrol.Starta ();
 		standstill.Starta ();
-		takeCover = new TakeCover (nodeSize, reachGoal.state.sGrid.hiddenSpaceCost, 
+		takeCover = new TakeCover (reachGoal.state.sGrid.hiddenSpaceCost, 
 		                           reachGoal.state.sGrid.grid, reachGoal.state.sGrid.spaceCostScalars);
 
 		anim = GetComponent<Animation> ();
